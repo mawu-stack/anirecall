@@ -19,6 +19,8 @@ export default function Home() {
   const [clues, setClues] = useState([]);
   const [candidates, setCandidates] = useState([]);
   const [excludedIds, setExcludedIds] = useState([]);
+  const [answeredCategories, setAnsweredCategories] = useState([]);
+  const [previousQuestions, setPreviousQuestions] = useState([]);
   const [followUpQuestion, setFollowUpQuestion] = useState(null);
   const [reasoningSummary, setReasoningSummary] = useState('');
   const [isDemoMode, setIsDemoMode] = useState(true);
@@ -86,6 +88,8 @@ export default function Home() {
     setQuery(historyItem.originalQuery || '');
     setClues(historyItem.cluesSnapshot || []);
     setExcludedIds([]);
+    setAnsweredCategories([]);
+    setPreviousQuestions([]);
     setCurrentMode('story');
     // Trigger agent search with reopened clues
     executeSearch({
@@ -119,7 +123,9 @@ export default function Home() {
           existingClues: activeClues,
           excludedIds: activeExcluded,
           followUpAnswer,
-          mode: searchMode
+          mode: searchMode,
+          answeredCategories,
+          previousQuestions
         })
       });
 
@@ -130,6 +136,8 @@ export default function Home() {
         setFollowUpQuestion(json.data.followUpQuestion || null);
         setReasoningSummary(json.data.reasoningSummary || '');
         setIsDemoMode(Boolean(json.data.isDemoMode));
+        if (json.data.answeredCategories) setAnsweredCategories(json.data.answeredCategories);
+        if (json.data.previousQuestions) setPreviousQuestions(json.data.previousQuestions);
       } else {
         setErrorMessage(json.error || 'Failed to process memory clues.');
       }

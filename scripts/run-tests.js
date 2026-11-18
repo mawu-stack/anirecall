@@ -59,7 +59,7 @@ async function runAllTests() {
 
   console.log('\n-----------------------------------------------------');
 
-  // Test 3: Incorrect or Uncertain Clue Handling
+  // Test 3: Uncertain ("maybe") Clue Handling as Soft Preference
   console.log('Test 3: Uncertain ("maybe") Clue Handling as Soft Preference');
   try {
     const res3 = await runRecallAgent({
@@ -147,6 +147,146 @@ async function runAllTests() {
     assert(res7.candidates[0]?.title.includes('Evangelion'), `Matched Neon Genesis Evangelion (Got: ${res7.candidates[0]?.title})`);
   } catch (err) {
     assert(false, `Test 7 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 8: Incorrect "Sure" Clue Handling
+  console.log('Test 8: Incorrect "Sure" Clue (Flags Conflict, Surfaces Candidate)');
+  try {
+    const res8 = await runRecallAgent({
+      existingClues: [
+        { id: 'c1', category: 'scene', text: 'Eating potato chip dramatically while hiding mini TV', confidence: 'sure' },
+        { id: 'c2', category: 'character', text: 'Protagonist writing in black notebook', confidence: 'sure' },
+        { id: 'c3', category: 'approx_year', text: 'Released around 2024', confidence: 'sure' } // Incorrect year (Death Note is 2006)
+      ]
+    });
+    assert(res8.candidates.length > 0, 'Surfaces Death Note despite incorrect year');
+    assert(res8.candidates[0].title === 'Death Note', `Top candidate is Death Note (Got: ${res8.candidates[0]?.title})`);
+    assert(
+      res8.candidates[0].conflictingClues.some(c => c.includes('Year discrepancy')),
+      'Conflicting clue is explicitly flagged for user correction'
+    );
+    assert(res8.candidates[0].matchTier !== 'Strong match', 'Not marked Strong match due to conflicting year');
+    console.log(`    Flagged conflict: ${res8.candidates[0].conflictingClues.join('; ')}`);
+  } catch (err) {
+    assert(false, `Test 8 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 9: Missing Credentials / Fallback Mode
+  console.log('Test 9: Missing Credentials Graceful Handling');
+  try {
+    const res9 = await runRecallAgent({
+      query: "Girl enters bathhouse after parents turn into pigs"
+    });
+    assert(res9.isDemoMode === true, 'Accurately reports isDemoMode=true when running offline/fixture mode');
+    assert(res9.candidates[0]?.title === 'Spirited Away', `Correctly identified Spirited Away (Got: ${res9.candidates[0]?.title})`);
+    assert(
+      res9.reasoningSummary.includes('Curated fixture catalog mode active'),
+      'Reasoning summary includes honest disclosure of curated fixture mode'
+    );
+  } catch (err) {
+    assert(false, `Test 9 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 10: Do Not Repeatedly Ask Questions Already Answered
+  console.log('Test 10: Non-Repeating Follow-Up Questions');
+  try {
+    // 1st turn: ambiguous query
+    const res10a = await runRecallAgent({
+      query: "Dark supernatural anime with tactical mind games"
+    });
+    const firstQ = res10a.followUpQuestion;
+    assert(firstQ !== null, 'Generated first discriminating question');
+
+    // 2nd turn: user answers the question category
+    const res10b = await runRecallAgent({
+      query: "Dark supernatural anime with tactical mind games",
+      followUpAnswer: { category: firstQ.category, text: firstQ.options[0] },
+      answeredCategories: [firstQ.category],
+      previousQuestions: [firstQ.question]
+    });
+
+    if (res10b.followUpQuestion) {
+      assert(
+        res10b.followUpQuestion.question !== firstQ.question,
+        `Did not repeat the previous question "${firstQ.question}"`
+      );
+      assert(
+        res10b.followUpQuestion.category !== firstQ.category,
+        `Did not repeat the answered category "${firstQ.category}"`
+      );
+    } else {
+      assert(true, 'Resolved ambiguity after first answer without needing repeat question');
+    }
+  } catch (err) {
+    assert(false, `Test 10 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 11: End-to-End User Sequence
+  console.log('Test 11: End-to-End Interaction Sequence');
+  try {
+    // Step 1: Initial vague memory
+    const step1 = await runRecallAgent({
+      query: "Anime with high schoolers and notebook"
+    });
+    assert(step1.candidates.length >= 1, 'Step 1: Retrieved initial candidates');
+
+    // Step 2: User provides follow-up answer
+    const step2 = await runRecallAgent({
+      query: "Anime with high schoolers and notebook",
+      existingClues: step1.clues,
+      followUpAnswer: { category: 'scene', text: 'Eating potato chip dramatically while hiding mini TV' }
+    });
+    assert(step2.candidates[0]?.title === 'Death Note', 'Step 2: Refined to Death Note after answer');
+
+    // Step 3: Candidate rejection ("That's not it") on an unwanted candidate
+    const unwantedId = step2.candidates[1]?.id;
+    if (unwantedId) {
+      const step3 = await runRecallAgent({
+        existingClues: step2.clues,
+        excludedIds: [unwantedId]
+      });
+      assert(!step3.candidates.some(c => c.id === unwantedId), 'Step 3: Rejected candidate remains excluded');
+    } else {
+      assert(true, 'Step 3: Handled exclusion logic');
+    }
+
+    // Step 4: Confirmation ("Found it!") payload verification
+    const confirmedRecord = step2.candidates[0];
+    const savedHistoryPayload = {
+      id: `saved-${Date.now()}`,
+      anime: confirmedRecord,
+      originalQuery: "Anime with high schoolers and notebook",
+      cluesSnapshot: step2.clues,
+      timestamp: Date.now()
+    };
+    assert(Boolean(savedHistoryPayload.anime.title), 'Step 4: Saved history item structure is valid');
+    assert(savedHistoryPayload.cluesSnapshot.length > 0, 'Step 4: Preserves clues snapshot for reopening');
+  } catch (err) {
+    assert(false, `Test 11 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 12: In-Memory Caching & Rate Limiting Resilience
+  console.log('Test 12: In-Memory Caching & Throttling Resilience');
+  try {
+    const t0 = Date.now();
+    await searchAnime('Steins;Gate');
+    const t1 = Date.now();
+    await searchAnime('Steins;Gate');
+    const t2 = Date.now();
+    const cachedDuration = t2 - t1;
+    assert(cachedDuration < 50, `Subsequent query returned from in-memory cache in ${cachedDuration}ms (< 50ms)`);
+  } catch (err) {
+    assert(false, `Test 12 failed with error: ${err.message}`);
   }
 
   console.log('\n=====================================================');

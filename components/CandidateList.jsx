@@ -185,8 +185,11 @@ export default function CandidateList({
                     </span>
                   </div>
 
-                  {/* Metadata Chips: Year, Format, Studio, Episodes, Genres */}
+                  {/* Metadata Chips: Catalog ID, Year, Format, Studio, Episodes, Genres */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                    <span style={{ background: 'rgba(6, 182, 212, 0.12)', color: 'var(--accent-cyan)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                      ID: #{cand.malId || cand.id}
+                    </span>
                     {cand.year && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.year}</span>}
                     {cand.format && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.format}</span>}
                     {cand.episodes && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.episodes} eps</span>}

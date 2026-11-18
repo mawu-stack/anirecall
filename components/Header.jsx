@@ -4,43 +4,54 @@ import { Search, User, HelpCircle, Image as ImageIcon, BookmarkCheck, Sparkles }
 
 export default function Header({ currentMode, onSelectMode, isDemoMode }) {
   return (
-    <header style={{ textAlign: 'center', paddingTop: '1rem' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+    <header style={{ textAlign: 'center', paddingTop: '1rem', marginBottom: '1.75rem' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
         <div style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '10px',
+          width: '32px',
+          height: '32px',
+          borderRadius: '8px',
           background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#FFFFFF'
         }}>
-          <Sparkles size={20} />
+          <Sparkles size={18} />
         </div>
-        <h1 style={{
-          fontSize: '2rem',
+        <span style={{
+          fontSize: '1.05rem',
           fontWeight: 800,
-          letterSpacing: '-0.03em',
-          background: 'linear-gradient(135deg, #F8FAFC 60%, #A78BFA)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          color: 'var(--accent-violet-light)'
         }}>
           AniRecall
-        </h1>
+        </span>
       </div>
+
+      {/* Main Required Headline */}
+      <h1 style={{
+        fontSize: '2.15rem',
+        fontWeight: 800,
+        letterSpacing: '-0.03em',
+        color: 'var(--text-primary)',
+        margin: '0.2rem 0 0.4rem',
+        lineHeight: 1.2
+      }}>
+        What anime are you trying to remember?
+      </h1>
 
       <p style={{
         fontSize: '1.05rem',
         color: 'var(--text-secondary)',
-        marginBottom: '0.75rem',
+        marginBottom: '0.85rem',
         fontWeight: 400
       }}>
         “You remember the scene. We’ll find the anime.”
       </p>
 
-      {/* Mode status badge */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+      {/* Status Badges & Attribution */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
         {isDemoMode ? (
           <span className="badge badge-demo" title="Add GEMINI_API_KEY to .env.local for open-ended LLM inference">
             Curated Ground-Truth Catalog Mode (Verified MAL/AniList Grounding)
@@ -50,6 +61,10 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
             Live AI Agent Active (Google Gemini + AniList/Jikan APIs)
           </span>
         )}
+
+        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', background: 'var(--bg-input)', padding: '0.2rem 0.55rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)' }}>
+          Catalog Artwork & Records via AniList & MyAnimeList
+        </span>
       </div>
 
       {/* Navigation Mode Tabs */}
@@ -69,7 +84,7 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
           aria-label="Character Finder"
         >
           <User size={15} />
-          Character Finder
+          Character
         </button>
 
         <button
@@ -78,7 +93,7 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
           aria-label="Screenshot Search"
         >
           <ImageIcon size={15} />
-          Screenshot Match
+          Screenshot
         </button>
 
         <button

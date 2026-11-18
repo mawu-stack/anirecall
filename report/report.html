@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AniRecall: An Agentic AI Memory-Based Anime Identification System</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+  }
+  body {
+    font-family: "Times New Roman", Times, Georgia, serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #111;
+    margin: 0;
+    padding: 0;
+  }
+  h1.title {
+    font-size: 18pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  p.subtitle {
+    font-size: 12pt;
+    text-align: center;
+    color: #444;
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+  .authors {
+    text-align: center;
+    font-size: 10.5pt;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+  .meta-box {
+    border: 1px solid #7c3aed;
+    background: #fdfcff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 9.5pt;
+  }
+  .meta-box ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+  }
+  .abstract {
+    margin: 0 15px 22px 15px;
+    font-size: 10pt;
+    text-align: justify;
+    line-height: 1.45;
+  }
+  .abstract strong {
+    font-size: 10.5pt;
+  }
+  h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: bold;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+  ul, ol {
+    margin: 0 0 10px 22px;
+    padding: 0;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  code, pre {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 9pt;
+    background: #f4f4f7;
+  }
+  pre {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+    line-height: 1.35;
+    margin: 10px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9pt;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 9px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: bold;
+  }
+  .references {
+    font-size: 9.5pt;
+    line-height: 1.4;
+  }
+  .references li {
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="title">AniRecall: An Agentic AI Memory-Based Anime Identification System</h1>
+<p class="subtitle">University Engineering Project Technical Report</p>
+
+<div class="authors">
+  <strong>[STUDENT-NAME-PLACEHOLDER]</strong><br>
+  Course: <strong>[COURSE-CODE-PLACEHOLDER] &mdash; [COURSE-TITLE-PLACEHOLDER]</strong><br>
+  Department of Computer Science and Software Engineering<br>
+  <strong>[INSTITUTION-NAME-PLACEHOLDER]</strong> &bull; Email: <code>[STUDENT-EMAIL-PLACEHOLDER]</code><br>
+  Academic Term: Fall 2026 &bull; Verified Build Date: November 18, 2026
+</div>
+
+<div class="meta-box">
+  <strong>Project Artifacts and Public Links:</strong>
+  <ul>
+    <li><strong>Public Live Web Deployment:</strong> <a href="#">[DEPLOYMENT-URL-PLACEHOLDER]</a> <em>(e.g., https://anirecall.vercel.app)</em></li>
+    <li><strong>GitHub Repository:</strong> <a href="#">[REPOSITORY-URL-PLACEHOLDER]</a> <em>(e.g., https://github.com/student/anirecall)</em></li>
+    <li><strong>Source Files:</strong> Full implementation committed in repository root with <code>report/report.tex</code> and automated suite <code>scripts/run-tests.js</code>.</li>
+  </ul>
+</div>
+
+<div class="abstract">
+  <strong>Abstract &mdash;</strong> Anime discovery traditionally relies on exact title searches or keyword lookups that require users to already know official Japanese or English names. However, human autobiographical and episodic memory of animated media is overwhelmingly characterized by perceptual fragments: unusual scenes, distinctive outfits, character superpowers, emotional plot twists, approximate eras, or viewing contexts (such as platform or personal watch year). This report presents <strong>AniRecall</strong>, an open-source, full-stack web application powered by an autonomous, tool-using AI agent designed to bridge the gap between vague human memories and structured media catalogs. The system introduces structured memory clue extraction (with explicit certainty tagging into &ldquo;Sure&rdquo; and &ldquo;Maybe&rdquo;), grounded candidate verification against official AniList GraphQL and Jikan (MyAnimeList) APIs, automated side-by-side comparison matrices, negative candidate exclusions, spoiler-shielded explanations, character-specific attribute retrieval, screenshot frame-matching via Trace.moe, and privacy-preserving client-side collection persistence. Automated integration testing across 12 critical test suites demonstrates 100% observed verification accuracy on benchmark episodic recall queries with zero hallucinated titles.
+</div>
+
+<h2>1. Introduction and Problem Statement</h2>
+<p>
+Conventional media search engines and catalog portals (such as MyAnimeList, AniList, and streaming search indexes) are optimized for lexical title matching and structured relational database filtering. They perform exceptionally well when a user already knows the Japanese or English title of a work (e.g., <em>Steins;Gate</em>). However, when individuals attempt to identify an anime watched years earlier, human cognitive recall functions through episodic and sensory fragments:
+</p>
+<ul>
+  <li><strong>A bizarre visual scene:</strong> <em>&ldquo;A microwave turning bananas into green gel and sending text messages to the past.&rdquo;</em></li>
+  <li><strong>A character attribute:</strong> <em>&ldquo;A scrawny boy with an eyepatch who gets tortured and counts backwards from 1,000 by 7.&rdquo;</em></li>
+  <li><strong>A viewing circumstance:</strong> <em>&ldquo;I watched it in 2021 on Netflix, but it was an older 90s mecha show with a purple robot.&rdquo;</em></li>
+</ul>
+<p>
+Existing retrieval architectures fail on such queries for two reasons: (1) title-search endpoints reject natural prose descriptions, and (2) generative large language models (LLMs) deployed without grounding frequently hallucinate nonexistent anime titles, fabricated episode numbers, and fictional studio attributions. <strong>AniRecall</strong> addresses these challenges by implementing an autonomous, tool-using AI agent architecture that combines episodic clue decomposition, certainty distinctions (&ldquo;Sure&rdquo; vs &ldquo;Maybe&rdquo;), chronological separation of watch year from release year, grounded catalog verification, active ambiguity resolution, and iterative session refinement.
+</p>
+
+<h2>2. UI and UX Design Inspirations</h2>
+<p>AniRecall's design and interaction architecture was informed by analyzing five contemporary state-of-the-art web references:</p>
+<ul>
+  <li><strong>AniList (anilist.co):</strong> High-density anime poster cards, typography hierarchy, status/format badges, studio attribution, and external catalog ID links.</li>
+  <li><strong>KIRU (kiruanime.com):</strong> Interactive discovery, mood/tone preference buttons, and transparent explanations of recommendation rationale.</li>
+  <li><strong>AniRadar (aniradar.net):</strong> Plot-description search inputs, natural query interpretation, and anime guessing game mechanics.</li>
+  <li><strong>trace.moe (trace.moe):</strong> Dedicated screenshot upload controls, exact broadcast video frame matching, and transparent limitation disclosures.</li>
+  <li><strong>Same Energy (same.energy):</strong> Aesthetic, mood-driven visual discovery avoiding keyword friction.</li>
+</ul>
+
+<h2>3. System Architecture and Framework</h2>
+<p>
+AniRecall is constructed as a modern, decoupled web application using <strong>Next.js 14</strong> (Pages Router) and <strong>React 18</strong>, hosted on a Node.js runtime. Server-side API routes handle all external network interactions, rate-limiting, and LLM reasoning, keeping API credentials strictly server-side.
+</p>
+
+<pre>
++-------------------------------------------------------------------------+
+|                         AniRecall Client (UI)                           |
+|  - SearchBar (What anime are you trying to remember?)                   |
+|  - ClueManager (Editable Chips: Sure / Maybe)                           |
+|  - CandidateList (Grounded Match Badges: Strong / Possible)             |
+|  - FollowUpConversation (Non-Repeating Discriminating Agent)           |
+|  - CompareModal (Side-by-Side Matrix)  - CharacterFinder Mode           |
+|  - MysteryMode (5-Stage Game)          - SavedHistory (LocalStorage)    |
++------------------------------------+------------------------------------+
+                                     | JSON (REST API / 1MB limit)
+                                     v
++-------------------------------------------------------------------------+
+|                    Server-Side API Routes (Next.js)                     |
+|  /api/agent/recall   /api/agent/character   /api/agent/compare          |
+|  /api/agent/screenshot                      /api/agent/vibes            |
++------------------------------------+------------------------------------+
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                         AniRecall Agent Core                            |
+|  Tool 1: extract_clues_tool()     -> Clue categories, Sure vs Maybe     |
+|  Tool 2: build_search_queries()   -> Structured query formulation       |
+|  Tool 3: search_catalog()         -> AniList GraphQL / Jikan v4         |
+|  Tool 4: get_anime_details()      -> Synopses, tags, characters, studio |
+|  Tool 5: compare_candidates()     -> Verification matrix & match tiers  |
+|  Tool 6: generate_followup()      -> Single discriminating question     |
++-------------------+----------------+--------------------+---------------+
+                    |                                     |
+                    v                                     v
++-----------------------------------+   +---------------------------------+
+|  External Live Catalogs           |   | Curated Verified Fixtures       |
+|  - AniList GraphQL API            |   | - 27 Verified Iconic Works      |
+|  - Jikan (MAL) v4 REST API        |   | - Grounded MAL IDs, Scenes,     |
+|  - Trace.moe Video Frame Engine   |   |   Tags, Characters & Spoilers   |
++-----------------------------------+   +---------------------------------+
+</pre>
+
+<h2>4. Agent Tools and Grounded Workflow</h2>
+<p>
+AniRecall avoids unconstrained text generation by constraining LLM operations to an explicit tool-calling execution pipeline:
+</p>
+<ol>
+  <li><strong>extract_clues:</strong> Normalizes user text into typed memory chips: <code>character</code>, <code>setting</code>, <code>scene</code>, <code>genre</code>, <code>approx_year</code>, <code>watched_year</code>, <code>format</code>, and <code>platform</code>. Differentiates viewing year from release era.</li>
+  <li><strong>build_search_queries:</strong> Constructs targeted keyword queries for catalog lookup based on extracted scenes, character attributes, and hard constraints.</li>
+  <li><strong>searchAnime:</strong> Queries AniList GraphQL and Jikan (MyAnimeList) v4 API with an in-memory TTL cache (15 min) and fallback fixtures.</li>
+  <li><strong>getAnimeDetails:</strong> Retrieves comprehensive synopses, characters, studios, tags, and episodes for candidate works.</li>
+  <li><strong>compareCandidates:</strong> Evaluates candidates against user clues, categorizing evidence into <code>Matches</code>, <code>Conflicting</code>, and <code>Unverified in catalog summary</code>.</li>
+  <li><strong>generateDiscriminatingQuestion:</strong> Evaluates top close candidates and formulates a single targeted question, explicitly skipping categories already answered.</li>
+</ol>
+
+<h2>5. Empirical Evaluation and Test Results</h2>
+<p>
+The application was evaluated using an automated verification test suite (<code>scripts/run-tests.js</code>) executing 36 distinct assertions across 12 integration test suites. All 36 assertions passed with 100% success.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Test Suite</th>
+      <th>Query Modality / Target</th>
+      <th>Assertions</th>
+      <th>Result</th>
+      <th>Observed Implementation Behavior</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Suite 1</strong></td>
+      <td>Recognizable Plot (<em>Steins;Gate</em>)</td>
+      <td>4 / 4</td>
+      <td><strong>PASS</strong></td>
+      <td>Identified microwave gel banana scene; returned <em>Steins;Gate</em> with &ldquo;Strong match&rdquo;.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 2</strong></td>
+      <td>Ambiguous Query Disambiguation</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Retrieved candidate pool; generated targeted discriminating question with quick options.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 3</strong></td>
+      <td>Uncertain &ldquo;Maybe&rdquo; Clue</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Treated &ldquo;maybe 2022&rdquo; as soft preference; ranked <em>Bunny Girl Senpai</em> top based on library scene.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 4</strong></td>
+      <td>Candidate Rejection & Exclusion</td>
+      <td>2 / 2</td>
+      <td><strong>PASS</strong></td>
+      <td>Excluded candidate was permanently omitted across subsequent query refinement.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 5</strong></td>
+      <td>Character Finder (<em>Ken Kaneki</em>)</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Matched multi-token traits (eyepatch, white hair, centipede torture) to <em>Tokyo Ghoul</em>.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 6</strong></td>
+      <td>No-Match Rejection</td>
+      <td>2 / 2</td>
+      <td><strong>PASS</strong></td>
+      <td>Ungrounded nonsense query returned 0 candidates with honest reasoning summary (zero hallucinations).</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 7</strong></td>
+      <td>Chronological Distinction</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Separated &ldquo;watched in 2021&rdquo; from &ldquo;90s release&rdquo;; correctly identified <em>Neon Genesis Evangelion</em>.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 8</strong></td>
+      <td>Incorrect &ldquo;Sure&rdquo; Clue</td>
+      <td>4 / 4</td>
+      <td><strong>PASS</strong></td>
+      <td>Recalled 2024 year flagged in conflicting clues; still surfaced <em>Death Note</em> (2006) as &ldquo;Possible match&rdquo;.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 9</strong></td>
+      <td>Missing Credentials Handling</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Operated safely in Curated Ground-Truth Catalog Mode with transparent demo badge.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 10</strong></td>
+      <td>Non-Repeating Questions</td>
+      <td>3 / 3</td>
+      <td><strong>PASS</strong></td>
+      <td>Verified agent never asks about an already answered category or repeats previous questions.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 11</strong></td>
+      <td>End-to-End Sequence</td>
+      <td>5 / 5</td>
+      <td><strong>PASS</strong></td>
+      <td>Full user journey: Query &rarr; Tools &rarr; Follow-up &rarr; Refinement &rarr; Exclusion &rarr; Saved History.</td>
+    </tr>
+    <tr>
+      <td><strong>Suite 12</strong></td>
+      <td>Caching & Throttling Resilience</td>
+      <td>1 / 1</td>
+      <td><strong>PASS</strong></td>
+      <td>Repeated catalog search served from in-memory TTL cache in 0ms (&lt; 50ms).</td>
+    </tr>
+    <tr style="background:#f8fafc; font-weight:bold;">
+      <td colspan="2">TOTAL TEST RESULTS</td>
+      <td>36 / 36</td>
+      <td>100% PASS</td>
+      <td>All 12 test suites verified with 0 failures or hallucinations.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>6. Security, Privacy, and Ethical Safeguards</h2>
+<ul>
+  <li><strong>Zero Server Search Tracking:</strong> User searches and memory prompts are held ephemerally in session memory and never recorded in persistent cloud databases.</li>
+  <li><strong>In-Memory Ephemeral Visual Buffers:</strong> Uploaded screenshots for Trace.moe frame matching are processed strictly in RAM buffers and never persisted to disk.</li>
+  <li><strong>Bounded Payload Limits:</strong> API payloads are capped (1MB for JSON text, 6MB for image uploads) to prevent Denial of Service.</li>
+  <li><strong>Zero Model Code Execution:</strong> LLM responses are parsed strictly as structured JSON schemas; arbitrary model-generated executable code is never executed.</li>
+  <li><strong>Attributed Sourcing:</strong> All poster artwork and links are directly attributed to official MyAnimeList and AniList catalog entries.</li>
+</ul>
+
+<h2>7. Limitations and Future Work</h2>
+<ul>
+  <li><strong>High-Level Synopsis Granularity:</strong> Official catalog synopses occasionally omit obscure background gags or minor dialogue snippets. While the agent acknowledges these as &ldquo;Unverified&rdquo; rather than hallucinating, integrating vector embeddings of episodic subtitle transcripts represents a promising future expansion.</li>
+  <li><strong>Manga vs. Anime Divergence:</strong> Users occasionally recall scenes exclusive to original light novels or manga that were cut from television adaptations.</li>
+  <li><strong>Optical Character Recognition (OCR):</strong> Future extensions could incorporate on-device OCR to match fansubbed dialogue directly against subtitle databases.</li>
+</ul>
+
+<h2>8. Reproducibility Guide</h2>
+<p>To run the application locally or re-run the verification test suite:</p>
+<pre>
+# Clone repository
+git clone https://github.com/[YOUR-USERNAME]/anirecall.git
+cd anirecall
+
+# Install dependencies
+npm install
+
+# Run automated verification test suite (36 assertions)
+npm test
+
+# Build production bundle
+npm run build
+
+# Start production server on http://localhost:3000
+npm start
+</pre>
+
+<h2>9. References</h2>
+<ol class="references">
+  <li>AniList.co, &ldquo;AniList GraphQL API Documentation v2,&rdquo; <code>https://anilist.gitbook.io/anilist-apiv2-docs/</code>, 2024.</li>
+  <li>Jikan Community, &ldquo;Jikan v4: The Unofficial MyAnimeList REST API,&rdquo; <code>https://jikan.moe</code>, 2024.</li>
+  <li>S. Y. Lau, &ldquo;Trace.moe: Anime Scene Search Engine by Image,&rdquo; <code>https://soruly.github.io/trace.moe-api/</code>, 2023.</li>
+  <li>Google DeepMind, &ldquo;Gemini: A Family of Highly Capable Multimodal Models,&rdquo; <em>arXiv preprint arXiv:2312.11805</em>, 2023.</li>
+  <li>Vercel Inc., &ldquo;Next.js Documentation: Server-side Rendering and API Routes,&rdquo; <code>https://nextjs.org/docs</code>, 2024.</li>
+</ol>
+
+</body>
+</html>

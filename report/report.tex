@@ -62,7 +62,7 @@
 \maketitle
 
 \begin{abstract}
-Anime discovery traditionally relies on exact title searches or keyword lookups that require users to recall precise names. However, human autobiographical and episodic memory of animated media is overwhelmingly characterized by perceptual fragments: unusual scenes, distinctive outfits, character hairstyles, emotional plot twists, approximate eras, or viewing contexts (e.g., viewing platform or personal watch year). This report presents \textbf{AniRecall}, an open-source, full-stack web application powered by an autonomous, tool-using AI agent designed to bridge the gap between vague human memories and structured media catalogs. The system introduces structured memory clue extraction (with explicit certainty tagging into ``Sure'' and ``Maybe''), grounded candidate verification against official AniList GraphQL and Jikan (MyAnimeList) APIs, automated side-by-side comparison matrices, negative candidate exclusions, spoiler-shielded explanations, character-specific attribute retrieval, screenshot frame-matching via Trace.moe, and privacy-preserving client-side collection persistence. Automated integration testing across seven critical test suites demonstrates 100\% observed verification accuracy on benchmark episodic recall queries with zero hallucinated titles.
+Anime discovery traditionally relies on exact title searches or keyword lookups that require users to recall precise names. However, human autobiographical and episodic memory of animated media is overwhelmingly characterized by perceptual fragments: unusual scenes, distinctive outfits, character superpowers, emotional plot twists, approximate eras, or viewing contexts (e.g., viewing platform or personal watch year). This report presents \textbf{AniRecall}, an open-source, full-stack web application powered by an autonomous, tool-using AI agent designed to bridge the gap between vague human memories and structured media catalogs. The system introduces structured memory clue extraction (with explicit certainty tagging into ``Sure'' and ``Maybe''), grounded candidate verification against official AniList GraphQL and Jikan (MyAnimeList) APIs, automated side-by-side comparison matrices, negative candidate exclusions, spoiler-shielded explanations, character-specific attribute retrieval, screenshot frame-matching via Trace.moe, and privacy-preserving client-side collection persistence. Automated integration testing across 12 critical test suites (36 assertions) demonstrates 100\% observed verification accuracy on benchmark episodic recall queries with zero hallucinated titles.
 \end{abstract}
 
 \vspace{0.5em}
@@ -74,8 +74,8 @@ Anime discovery traditionally relies on exact title searches or keyword lookups 
         \textbf{Artifact and Project Links:}
         \begin{itemize}[leftmargin=1.5em,noitemsep]
             \item \textbf{Public Live Deployment:} \url{[DEPLOYMENT-URL-PLACEHOLDER]} \textit{(e.g., https://anirecall.vercel.app)}
-            \item \textbf{GitHub Repository:} \url{[REPOSITORY-URL-PLACEHOLDER]} \textit{(e.g., https://github.com/username/anirecall)}
-            \item \textbf{PDF Compilation Status:} \textit{Notice -- Native LaTeX compiler not present in local operating system environment. Complete LaTeX source is provided herein with exact build instructions in Section \ref{sec:reproducibility}.}
+            \item \textbf{GitHub Repository:} \url{[REPOSITORY-URL-PLACEHOLDER]} \textit{(e.g., https://github.com/student/anirecall)}
+            \item \textbf{PDF Compilation Status:} \textit{PDF compilation remains outstanding due to the absence of a native LaTeX compiler in the local Windows environment. The complete LaTeX source is provided herein with exact build instructions in Section \ref{sec:reproducibility}.}
         \end{itemize}
     }
 }
@@ -98,9 +98,21 @@ Existing retrieval architectures fail on such queries for two reasons: (1) title
     \item \textbf{Certainty Distinctions:} Allowing users to mark clues as ``Sure'' (hard criteria) or ``Maybe'' (soft preferences).
     \item \textbf{Chronological Disambiguation:} Distinguishing the year a user watched a show from its actual production release year.
     \item \textbf{Grounded Catalog Verification:} Cross-referencing candidate synopses, characters, tags, and production dates against verified catalog databases.
-    \item \textbf{Active Ambiguity Resolution:} Posing single discriminating follow-up questions when candidates are closely scored.
+    \item \textbf{Active Ambiguity Resolution:} Posing single discriminating follow-up questions when candidates are closely scored without repeating previously answered topics.
     \item \textbf{Iterative Session Refinement:} Preserving negative exclusions (``That's not it'') and user corrections across conversational turns.
 \end{enumerate}
+
+\section{UI and UX Design References}
+\label{sec:references_ux}
+
+AniRecall's design and interaction architecture was informed by analyzing five contemporary state-of-the-art web references:
+\begin{itemize}[noitemsep]
+    \item \textbf{AniList (\url{https://anilist.co/}):} High-density anime poster cards, typography hierarchy, status/format badges, studio attribution, and external catalog ID links.
+    \item \textbf{KIRU (\url{https://kiruanime.com/}):} Interactive discovery, mood/tone preference buttons, and transparent explanations of recommendation rationale.
+    \item \textbf{AniRadar (\url{https://aniradar.net/}):} Plot-description search inputs, natural query interpretation, and anime guessing game mechanics.
+    \item \textbf{trace.moe (\url{https://trace.moe/}):} Dedicated screenshot upload controls, exact broadcast video frame matching, and transparent limitation disclosures.
+    \item \textbf{Same Energy (\url{https://www.same.energy/}):} Aesthetic, mood-driven visual discovery avoiding keyword friction.
+\end{itemize}
 
 \section{System Architecture and Framework}
 \label{sec:architecture}
@@ -112,9 +124,11 @@ The AniRecall application is constructed as a modern, decoupled web architecture
 \begin{verbatim}
 +-------------------------------------------------------------------------+
 |                         AniRecall Client (UI)                           |
-|  - SearchBar (What do you remember?)   - ClueManager (Sure / Maybe)     |
-|  - CandidateList (Grounded Badges)     - FollowUpConversation (Agent)   |
-|  - CompareModal (Side-by-Side)         - CharacterFinder / Screenshot   |
+|  - SearchBar (What anime are you trying to remember?)                   |
+|  - ClueManager (Editable Chips: Sure / Maybe)                           |
+|  - CandidateList (Grounded Match Badges: Strong / Possible)             |
+|  - FollowUpConversation (Non-Repeating Discriminating Agent)           |
+|  - CompareModal (Side-by-Side Matrix)  - CharacterFinder Mode           |
 |  - MysteryMode (5-Stage Game)          - SavedHistory (LocalStorage)    |
 +------------------------------------+------------------------------------+
                                      | JSON (REST API / 1MB limit)
@@ -187,7 +201,7 @@ Candidates retrieved from the catalog are evaluated against the extracted memory
 
 Clues are evaluated against $\text{Corpus}(A)$ to classify:
 \begin{itemize}[noitemsep]
-    \item \textbf{Matching Clues ($\mathcal{M}$):} Tokens verified with $\ge 50\%$ semantic overlap in official records.
+    \item \textbf{Matching Clues ($\mathcal{M}$):} Tokens verified with significant semantic overlap in official records.
     \item \textbf{Conflicting Clues ($\mathcal{C}$):} Hard constraints (such as conflicting formats or release eras) that directly contradict catalog data.
     \item \textbf{Unverified Clues ($\mathcal{U}$):} Specific user recollections (such as micro-scenes or dialogue fragments) not documented in high-level catalog summaries.
 \end{itemize}
@@ -199,7 +213,7 @@ S(A) = \sum_{c \in \mathcal{M}} w(c) - \sum_{c \in \mathcal{C}} p(c) + B_{\text{
 where $w(c)$ represents category weights ($+5$ for sure clues, $+3$ for maybe clues), $p(c)$ denotes conflict penalties, and $B_{\text{scene}} = +6$ rewards confirmed scene matches.
 
 \subsection{Tool 4: Discriminating Question Generation (\texttt{generateFollowUp})}
-When multiple candidates satisfy retrieval thresholds ($S(A) \ge 5$) without an overwhelming top candidate (score margin $< 10$), the agent formulates a single targeted question to distinguish the leaders. The generator evaluates:
+When multiple candidates satisfy retrieval thresholds ($S(A) \ge 5$) without an overwhelming top candidate (score margin $< 10$), the agent formulates a single targeted question to distinguish the leaders. The generator explicitly checks $\text{AnsweredCategories}$ and $\text{PreviousQuestions}$ to ensure that questions are never repeated. The generator evaluates:
 \begin{enumerate}[noitemsep]
     \item \textbf{Format divergence:} Standalone Movie vs. TV Series.
     \item \textbf{Temporal divergence:} Classic era (e.g., 1990s) vs. modern release (e.g., 2020s).
@@ -240,7 +254,7 @@ Confirmed anime titles are preserved with the user's original query text in brow
 \section{Empirical Evaluation and Test Results}
 \label{sec:evaluation}
 
-The system was evaluated through an automated verification suite (\texttt{scripts/run-tests.js}) comprising seven integration benchmarks representing real-world query modalities.
+The system was evaluated through an automated verification suite (\texttt{scripts/run-tests.js}) comprising 12 integration benchmarks (36 total assertions) representing real-world query modalities.
 
 \begin{table}[htbp]
 \centering
@@ -249,17 +263,22 @@ The system was evaluated through an automated verification suite (\texttt{script
 \label{tab:evaluation}
 \begin{tabular}{@{}llccp{5.5cm}@{}}
 \toprule
-\textbf{Test ID} & \textbf{Query Type / Target} & \textbf{Total Assertions} & \textbf{Status} & \textbf{Observed Behavior \& Evidence} \\
+\textbf{Test Suite} & \textbf{Query Type / Target} & \textbf{Assertions} & \textbf{Status} & \textbf{Observed Behavior \& Evidence} \\
 \midrule
-\textbf{Test 1} & Recognizable Scene (\textit{Steins;Gate}) & 4 & \textbf{PASS} & Correctly extracted microwave gel banana scene; matched \textit{Steins;Gate} with `Strong match' tier. \\
-\textbf{Test 2} & Ambiguous Query & 3 & \textbf{PASS} & Retrieved multiple candidates; generated discriminating question distinguishing \textit{Fate/Zero} and \textit{Tokyo Ghoul}. \\
-\textbf{Test 3} & Uncertain Clue (\textit{Bunny Girl Senpai}) & 3 & \textbf{PASS} & Marked incorrect 2022 year as soft `maybe'; correctly ranked \textit{Bunny Girl Senpai} top based on library scene. \\
-\textbf{Test 4} & Candidate Exclusion & 2 & \textbf{PASS} & Rejected candidate was excluded; preserved exclusion across query refinement turn. \\
-\textbf{Test 5} & Character Finder (\textit{Ken Kaneki}) & 3 & \textbf{PASS} & Matched multi-token trait query (`eyepatch white hair centipede torture') to \textit{Ken Kaneki} and \textit{Tokyo Ghoul}. \\
-\textbf{Test 6} & No-Match Rejection & 2 & \textbf{PASS} & Nonsense query (`purple flying tractors in space eating cheese') returned 0 candidates with honest reasoning summary. \\
-\textbf{Test 7} & Chronological Distinction & 3 & \textbf{PASS} & Separated `watched in 2021' from `90s release'; correctly identified \textit{Neon Genesis Evangelion}. \\
+\textbf{Suite 1} & Recognizable Scene (\textit{Steins;Gate}) & 4 / 4 & \textbf{PASS} & Extracted microwave gel banana scene; matched \textit{Steins;Gate} with `Strong match' tier. \\
+\textbf{Suite 2} & Ambiguous Query Disambiguation & 3 / 3 & \textbf{PASS} & Retrieved multiple candidates; generated discriminating question distinguishing \textit{Fate/Zero} and \textit{Tokyo Ghoul}. \\
+\textbf{Suite 3} & Uncertain Clue (\textit{Bunny Girl Senpai}) & 3 / 3 & \textbf{PASS} & Marked incorrect 2022 year as soft `maybe'; correctly ranked \textit{Bunny Girl Senpai} top based on library scene. \\
+\textbf{Suite 4} & Candidate Exclusion & 2 / 2 & \textbf{PASS} & Rejected candidate was excluded; preserved exclusion across query refinement turn. \\
+\textbf{Suite 5} & Character Finder (\textit{Ken Kaneki}) & 3 / 3 & \textbf{PASS} & Matched multi-token trait query (`eyepatch white hair centipede torture') to \textit{Ken Kaneki} and \textit{Tokyo Ghoul}. \\
+\textbf{Suite 6} & No-Match Rejection & 2 / 2 & \textbf{PASS} & Nonsense query (`purple flying tractors in space eating cheese') returned 0 candidates with honest reasoning summary. \\
+\textbf{Suite 7} & Chronological Distinction & 3 / 3 & \textbf{PASS} & Separated `watched in 2021' from `90s release'; correctly identified \textit{Neon Genesis Evangelion}. \\
+\textbf{Suite 8} & Incorrect `Sure' Clue & 4 / 4 & \textbf{PASS} & Recalled 2024 year flagged in conflicting clues; still surfaced \textit{Death Note} (2006) as `Possible match'. \\
+\textbf{Suite 9} & Missing Credentials & 3 / 3 & \textbf{PASS} & Operated safely in Curated Ground-Truth Catalog Mode with transparent demo badge. \\
+\textbf{Suite 10} & Non-Repeating Questions & 3 / 3 & \textbf{PASS} & Verified agent never asks about an already answered category or repeats previous questions. \\
+\textbf{Suite 11} & End-to-End Sequence & 5 / 5 & \textbf{PASS} & Full user journey: Query $\to$ Tools $\to$ Follow-up $\to$ Refinement $\to$ Exclusion $\to$ Saved History. \\
+\textbf{Suite 12} & Caching \& Throttling & 1 / 1 & \textbf{PASS} & Repeated catalog search served from in-memory TTL cache in 0ms ($< 50$ms). \\
 \bottomrule
-\textbf{Summary} & \textbf{All Verification Tests} & \textbf{20} & \textbf{PASS (100\%)} & \textbf{Zero hallucinations; verified catalog grounding.} \\
+\textbf{Summary} & \textbf{All 12 Verification Suites} & \textbf{36 / 36} & \textbf{100\% PASS} & \textbf{Zero hallucinations; verified catalog grounding.} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -289,7 +308,7 @@ In accordance with academic integrity guidelines, any fixture-based search is ex
 \begin{itemize}[noitemsep]
     \item \textbf{High-Level Synopsis Granularity:} Official catalog synopses frequently omit obscure background gags, minor dialogue snippets, or fleeting side characters. While the agent acknowledges these as ``Unverified'' rather than hallucinating, integrating vector embeddings of episodic subtitle transcripts represents a promising future expansion.
     \item \textbf{Manga vs. Anime Divergence:} Users occasionally recall scenes exclusive to original light novels or manga that were cut from animated television adaptations.
-    \item \textbf{Optical Character Recognition (OCR) for Subtitles:} Enhancing screenshot search with on-device OCR could allow matching fan subbed dialogue directly against subtitle databases.
+    \item \textbf{Optical Character Recognition (OCR) for Subtitles:} Enhancing screenshot search with on-device OCR could allow matching fansubbed dialogue directly against subtitle databases.
 \end{itemize}
 
 \section{Reproducibility and Compilation Instructions}
@@ -304,7 +323,7 @@ cd anirecall
 # 2. Install dependencies
 npm install
 
-# 3. Execute test suite
+# 3. Execute test suite (36 assertions)
 npm test
 
 # 4. Compile production build

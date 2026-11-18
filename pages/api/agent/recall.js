@@ -24,7 +24,9 @@ export default async function handler(req, res) {
       existingClues = [],
       excludedIds = [],
       followUpAnswer = null,
-      mode = 'story'
+      mode = 'story',
+      answeredCategories = [],
+      previousQuestions = []
     } = req.body || {};
 
     // Validate input types and limits
@@ -50,7 +52,9 @@ export default async function handler(req, res) {
       existingClues,
       excludedIds,
       followUpAnswer,
-      mode
+      mode,
+      answeredCategories: Array.isArray(answeredCategories) ? answeredCategories : [],
+      previousQuestions: Array.isArray(previousQuestions) ? previousQuestions : []
     });
 
     return res.status(200).json({
