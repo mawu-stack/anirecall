@@ -14,7 +14,7 @@ Developed as a university software engineering project combining natural languag
 **Developed by Mawutorwu Klu and Skythen Therlonge.**  
 - **Course Project:** Agentic AI Web Application & Media Discovery  
 - **GitHub Repository:** [https://github.com/mawu-stack/anirecall](https://github.com/mawu-stack/anirecall)  
-- **Live Deployment:** [https://anirecall-j8s1rwnh6-klum-3379.vercel.app](https://anirecall-j8s1rwnh6-klum-3379.vercel.app) *(Vercel)*
+- **Live Deployment:** [https://anirecall.vercel.app](https://anirecall.vercel.app) *(Vercel Production)*
 
 ---
 
