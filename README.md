@@ -209,7 +209,7 @@ npx vercel deploy --prod
 
 ## 📚 Project Links & Deliverables
 
-- **Live Application:** `[DEPLOYMENT-URL-PLACEHOLDER]` *(e.g. https://anirecall.vercel.app)*
-- **GitHub Repository:** `[REPOSITORY-URL-PLACEHOLDER]` *(e.g. https://github.com/student/anirecall)*
-- **Academic Report:** See `report/report.tex` (and compiled `report/report.pdf`)
+- **Live Application:** `https://anirecall.vercel.app` *(or custom Vercel domain)*
+- **GitHub Repository:** [https://github.com/mawu-stack/anirecall](https://github.com/mawu-stack/anirecall)
+- **Academic Report:** See `report/report.tex` (and compiled `report/report.pdf` / `report/report.html`)
 - **Demo Walkthrough:** See `DEMO_SCRIPT.md`
