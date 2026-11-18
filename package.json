@@ -1,0 +1,19 @@
+{
+  "name": "anirecall",
+  "version": "1.0.0",
+  "description": "AniRecall - You remember the scene. We'll find the anime.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node scripts/run-tests.js"
+  },
+  "dependencies": {
+    "lucide-react": "^0.453.0",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
