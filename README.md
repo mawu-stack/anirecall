@@ -146,27 +146,55 @@ Run the test suite with:
 ```bash
 npm test
 ```
-The automated test runner executes 7 comprehensive integration test suites:
+The automated test runner executes 12 comprehensive integration test suites (36 assertions total):
 1. Recognizable plot description (Steins;Gate)
-2. Ambiguous description generating follow-up questions
-3. Uncertain (`maybe`) clue handling as soft preference
-4. Candidate rejection (`"That's not it"`) and exclusion preservation
-5. Character finder appearance matching (Ken Kaneki / Tokyo Ghoul)
+2. Ambiguous description generating discriminating follow-up questions
+3. Uncertain (`maybe`) clue handling as soft preference (Bunny Girl Senpai)
+4. Candidate rejection (`"That's not it"`) and exclusion preservation across turns
+5. Character finder appearance & trait matching (Ken Kaneki / Tokyo Ghoul)
 6. No-match / ungrounded query rejection (zero hallucinations)
-7. Watched year vs. production release year distinction (Evangelion)
+7. Watched year vs. production release year distinction (Neon Genesis Evangelion)
+8. Conflicting "Sure" clue flagging without discarding candidates (Death Note)
+9. Missing credentials graceful fallback & fixture transparency disclosure
+10. Non-repeating follow-up question prevention across multi-turn sessions
+11. Full end-to-end multi-turn search & saved history interaction sequence
+12. In-memory caching & throttling resilience
 
 ---
 
 ## 🚢 Deployment Guide
 
-AniRecall is fully compatible with modern static and serverless hosting platforms:
+AniRecall is fully production-ready and optimized for serverless deployment on Vercel:
 
-### Vercel Deployment (Recommended)
-1. Push your repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com) and click **Add New Project**.
-3. Select your repository.
-4. In **Environment Variables**, optionally add `GEMINI_API_KEY`.
-5. Click **Deploy**.
+### Step 1: Push to GitHub
+```bash
+# If using GitHub CLI:
+gh repo create anirecall --public --source=. --remote=origin --push
+
+# Or if using standard Git:
+git remote add origin https://github.com/[YOUR-USERNAME]/anirecall.git
+git branch -M main
+git push -u origin main
+```
+
+### Step 2: Deploy to Vercel
+You can deploy directly via the Vercel CLI or via the Vercel Web Dashboard:
+
+#### Option A: Via Vercel CLI (Terminal)
+```bash
+# 1. Login to Vercel
+npx vercel login
+
+# 2. Deploy to production
+npx vercel deploy --prod
+```
+
+#### Option B: Via Vercel Web Dashboard
+1. Go to [https://vercel.com/new](https://vercel.com/new).
+2. Import your `anirecall` GitHub repository.
+3. In **Environment Variables**, optionally add:
+   - `GEMINI_API_KEY`: *(Optional)* Your Google Gemini API key.
+4. Click **Deploy**.
 
 ---
 
