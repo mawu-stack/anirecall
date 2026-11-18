@@ -1,6 +1,6 @@
 // components/SimilarVibes.jsx
 import React, { useState, useEffect } from 'react';
-import { Sparkles, X, ArrowRight, ExternalLink } from 'lucide-react';
+import { Sparkles, X, ArrowRight, ExternalLink, Compass } from 'lucide-react';
 
 export default function SimilarVibes({
   confirmedAnime,
@@ -10,6 +10,14 @@ export default function SimilarVibes({
   const [selectedVibe, setSelectedVibe] = useState('tone');
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const fetchVibes = async (vibe) => {
     if (!confirmedAnime) return;
@@ -48,31 +56,62 @@ export default function SimilarVibes({
   if (!confirmedAnime) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '820px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="vibes-modal-title"
+    >
+      <div
+        className="modal-content fade-in"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '860px', width: '95%' }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.25rem',
+            borderBottom: '1px solid var(--border-subtle)',
+            paddingBottom: '0.75rem'
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={20} color="var(--accent-violet-light)" />
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Similar Vibes to {confirmedAnime.title}
-            </h2>
+            <Compass size={22} color="var(--accent-cyan)" />
+            <div>
+              <h2 id="vibes-modal-title" style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                Similar Vibes to {confirmedAnime.title}
+              </h2>
+              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                Curated recommendations grounded in shared narrative DNA
+              </span>
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="btn-ghost" style={{ padding: '0.35rem' }} aria-label="Close modal">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-ghost"
+            style={{ padding: '0.35rem' }}
+            aria-label="Close similar vibes modal"
+          >
             <X size={18} />
           </button>
         </div>
 
         {/* Vibe Category Selector */}
         <div style={{ marginBottom: '1.25rem' }}>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>
-            Choose which element you loved most:
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Pivot discovery by what you loved most:
           </p>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
             {[
-              { id: 'tone', label: 'Dark / Emotional Tone' },
-              { id: 'setting', label: 'Worldbuilding & Setting' },
-              { id: 'character', label: 'Protagonist & Dynamics' }
-            ].map(v => (
+              { id: 'tone', label: '1. Emotional Tone & Atmosphere' },
+              { id: 'setting', label: '2. Worldbuilding & Setting' },
+              { id: 'themes', label: '3. Core Themes & Conflicts' },
+              { id: 'character', label: '4. Protagonist & Dynamics' }
+            ].map((v) => (
               <button
                 key={v.id}
                 type="button"
@@ -83,7 +122,7 @@ export default function SimilarVibes({
                   border: `1px solid ${selectedVibe === v.id ? 'var(--accent-violet)' : 'var(--border-subtle)'}`,
                   borderRadius: 'var(--radius-full)',
                   padding: '0.35rem 0.85rem',
-                  fontSize: '0.84rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
@@ -97,94 +136,91 @@ export default function SimilarVibes({
 
         {/* Recommendations list */}
         {isLoading ? (
-          <p style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-            Curating verified recommendations...
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', padding: '1rem 0' }}>
+            {[1, 2].map((k) => (
+              <div key={k} className="panel skeleton-card" style={{ height: '110px' }} />
+            ))}
+          </div>
+        ) : recommendations.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+            No specific companion titles found for this vibe criteria.
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
-            {recommendations.map((rec) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+            {recommendations.map((rec, idx) => (
               <div
-                key={rec.id}
-                className="panel fade-in"
+                key={rec.id || idx}
+                className="panel card-interactive fade-in"
                 style={{
-                  background: 'var(--bg-input)',
+                  padding: '0.85rem',
+                  background: 'var(--bg-card)',
                   display: 'flex',
-                  gap: '1rem',
-                  alignItems: 'flex-start',
-                  flexWrap: 'wrap'
+                  flexDirection: 'column',
+                  borderRadius: 'var(--radius-md)'
                 }}
               >
-                <img
-                  src={rec.posterUrl}
-                  alt={rec.title}
-                  style={{ width: '80px', height: '115px', objectFit: 'cover', borderRadius: '4px' }}
-                />
-
-                <div style={{ flex: 1, minWidth: '220px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                  <img
+                    src={rec.posterUrl || 'https://via.placeholder.com/150x215?text=No+Poster'}
+                    alt={rec.title}
+                    style={{
+                      width: '70px',
+                      height: '100px',
+                      objectFit: 'cover',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                      flexShrink: 0
+                    }}
+                    loading="lazy"
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.3 }}>
                       {rec.title}
                     </h3>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      {rec.year} • {rec.format}
-                    </span>
-                  </div>
-
-                  {/* Why it matches connection explanation */}
-                  <div style={{
-                    background: 'rgba(139, 92, 246, 0.1)',
-                    borderLeft: '3px solid var(--accent-violet)',
-                    padding: '0.45rem 0.75rem',
-                    borderRadius: '0 4px 4px 0',
-                    margin: '0.45rem 0 0.6rem',
-                    fontSize: '0.82rem',
-                    color: 'var(--text-primary)'
-                  }}>
-                    <strong>Why it matches:</strong> {rec.connectionExplanation}
-                  </div>
-
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '0.65rem' }}>
-                    {rec.synopsis}
-                  </p>
-
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSelectRecommended(rec.title);
-                        onClose();
-                      }}
-                      className="btn btn-primary"
-                      style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
-                    >
-                      Explore This Anime
-                      <ArrowRight size={13} />
-                    </button>
-
-                    {rec.sourceUrl && (
-                      <a
-                        href={rec.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
-                      >
-                        <ExternalLink size={13} />
-                        Catalog Record
-                      </a>
+                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      {rec.year} &bull; {rec.format} {rec.studio ? `&bull; ${rec.studio}` : ''}
+                    </p>
+                    {rec.genres && (
+                      <p style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', marginTop: '0.2rem' }}>
+                        {rec.genres.slice(0, 2).join(', ')}
+                      </p>
                     )}
                   </div>
                 </div>
+
+                {/* Connection Explanation */}
+                <div
+                  style={{
+                    background: 'var(--bg-input)',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.4,
+                    marginBottom: '0.75rem',
+                    flex: 1
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: 'var(--accent-violet-light)' }}>Why it connects: </span>
+                  {rec.reason || `Shares similar narrative focus and pacing.`}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onSelectRecommended(rec.title);
+                  }}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem', justifyContent: 'center' }}
+                >
+                  <span>Explore this anime</span>
+                  <ArrowRight size={13} />
+                </button>
               </div>
             ))}
           </div>
         )}
-
-        <div style={{ textAlign: 'right' }}>
-          <button type="button" onClick={onClose} className="btn btn-secondary">
-            Close
-          </button>
-        </div>
       </div>
     </div>
   );

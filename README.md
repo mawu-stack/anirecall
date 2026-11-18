@@ -1,10 +1,20 @@
 # AniRecall 🎬🔍
 
-> **“You remember the scene. We’ll find the anime.”**
+> **“You remember the scene. We’ll find the anime.”**  
+> *Developed by Mawutorwu Klu and Skythen Therlonge.*
 
 AniRecall is an agentic AI-powered web application that identifies anime titles from fragmented, uncertain, or obscure human memories: memorable scenes, character appearance, clothing, superpowers, settings, dialogue fragments, approximate release dates, or viewing platforms.
 
 Developed as a university software engineering project combining natural language processing, tool-using AI agents, and open anime catalog APIs.
+
+---
+
+## 👥 Developers & University Credits
+
+**Developed by Mawutorwu Klu and Skythen Therlonge.**  
+- **Course Project:** Agentic AI Web Application & Media Discovery  
+- **GitHub Repository:** [https://github.com/mawu-stack/anirecall](https://github.com/mawu-stack/anirecall)  
+- **Live Deployment:** [https://anirecall-j8s1rwnh6-klum-3379.vercel.app](https://anirecall-j8s1rwnh6-klum-3379.vercel.app) *(Vercel)*
 
 ---
 

@@ -1,6 +1,19 @@
 // components/CandidateList.jsx
 import React, { useState } from 'react';
-import { Check, X, Sparkles, ExternalLink, Columns, Eye, EyeOff, AlertTriangle, ShieldCheck } from 'lucide-react';
+import {
+  Check,
+  X,
+  Sparkles,
+  ExternalLink,
+  Columns,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  ShieldCheck,
+  Maximize2,
+  Info
+} from 'lucide-react';
+import DetailDrawer from './DetailDrawer';
 
 export default function CandidateList({
   candidates,
@@ -13,6 +26,7 @@ export default function CandidateList({
 }) {
   const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [revealedSpoilers, setRevealedSpoilers] = useState({});
+  const [activeDrawerAnime, setActiveDrawerAnime] = useState(null);
 
   const toggleSpoiler = (id) => {
     setRevealedSpoilers(prev => ({
@@ -41,10 +55,10 @@ export default function CandidateList({
       {/* Reasoning and summary banner */}
       {reasoningSummary && (
         <div
-          className="panel"
+          className="panel fade-in"
           style={{
             marginBottom: '1.25rem',
-            padding: '0.9rem 1.1rem',
+            padding: '0.9rem 1.15rem',
             background: 'rgba(30, 41, 59, 0.6)',
             borderColor: 'var(--border-subtle)'
           }}
@@ -52,10 +66,10 @@ export default function CandidateList({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
             <ShieldCheck size={16} color="var(--accent-violet-light)" />
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-violet-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Grounding & Retrieval Summary
+              Grounding & Retrieval Verification
             </span>
           </div>
-          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             {reasoningSummary}
           </p>
         </div>
@@ -63,18 +77,23 @@ export default function CandidateList({
 
       {/* Compare selection indicator */}
       {selectedForCompare.length === 1 && (
-        <div style={{
-          background: 'rgba(139, 92, 246, 0.15)',
-          border: '1px solid var(--accent-violet)',
-          borderRadius: 'var(--radius-md)',
-          padding: '0.65rem 1rem',
-          marginBottom: '1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: '0.85rem'
-        }}>
-          <span>Selected <strong>{selectedForCompare[0].title}</strong>. Click "Compare" on a second anime to see side-by-side differences.</span>
+        <div
+          className="fade-in"
+          style={{
+            background: 'rgba(139, 92, 246, 0.15)',
+            border: '1px solid var(--accent-violet)',
+            borderRadius: 'var(--radius-md)',
+            padding: '0.65rem 1rem',
+            marginBottom: '1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.85rem'
+          }}
+        >
+          <span>
+            Selected <strong>{selectedForCompare[0].title}</strong>. Click "Compare" on a second anime to see side-by-side differences.
+          </span>
           <button
             type="button"
             onClick={() => setSelectedForCompare([])}
@@ -86,17 +105,44 @@ export default function CandidateList({
         </div>
       )}
 
+      {/* Loading Skeleton */}
+      {isLoading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {[1, 2].map((k) => (
+            <div key={k} className="panel skeleton-card" style={{ height: '210px' }} />
+          ))}
+        </div>
+      )}
+
       {/* Empty State */}
-      {candidates.length === 0 ? (
-        <div className="panel" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+      {!isLoading && candidates.length === 0 ? (
+        <div className="panel" style={{ textAlign: 'center', padding: '3.5rem 1.5rem' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              color: 'var(--text-muted)'
+            }}
+          >
+            <Sparkles size={22} />
+          </div>
+          <p style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             No verified matches for current criteria
           </p>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto 1.25rem' }}>
-            Try describing a memorable moment, specific weapon or outfit, or loosen strict year/format filters.
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '440px', margin: '0 auto 1.25rem', lineHeight: 1.5 }}>
+            Try describing a memorable moment, specific weapon or outfit, or loosen strict year/format filters in the Clue Manager.
           </p>
         </div>
-      ) : (
+      ) : null}
+
+      {/* Candidate List Cards */}
+      {!isLoading && candidates.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {candidates.map((cand, index) => {
             const isComparing = selectedForCompare.some(c => c.id === cand.id);
@@ -105,39 +151,85 @@ export default function CandidateList({
             return (
               <article
                 key={cand.id || index}
-                className="panel fade-in"
+                className="panel card-interactive fade-in"
                 style={{
                   display: 'flex',
                   gap: '1.25rem',
                   position: 'relative',
                   outline: isComparing ? '2px solid var(--accent-violet)' : 'none',
-                  transition: 'border-color 0.2s ease',
-                  flexWrap: 'wrap'
+                  flexWrap: 'wrap',
+                  padding: '1.15rem'
                 }}
               >
-                {/* Poster Artwork with fallback */}
-                <div style={{ flexShrink: 0, width: '135px', position: 'relative' }}>
-                  <img
-                    src={cand.posterUrl || 'https://via.placeholder.com/225x320?text=No+Poster'}
-                    alt={`Official poster for ${cand.title}`}
-                    style={{
-                      width: '100%',
-                      height: '190px',
-                      objectFit: 'cover',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border-subtle)',
-                      background: 'var(--bg-main)'
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/225x320?text=Poster';
-                    }}
-                  />
+                {/* Poster Artwork with interactive drawer click & fallback */}
+                <div
+                  style={{
+                    flexShrink: 0,
+                    width: '135px',
+                    position: 'relative',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setActiveDrawerAnime(cand)}
+                  title="Click to open rich details, characters, and scenes drawer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setActiveDrawerAnime(cand);
+                    }
+                  }}
+                  aria-label={`View full details for ${cand.title}`}
+                >
+                  <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+                    <img
+                      src={cand.posterUrl || 'https://via.placeholder.com/225x320?text=No+Poster'}
+                      alt={`Official poster for ${cand.title}`}
+                      style={{
+                        width: '100%',
+                        height: '190px',
+                        objectFit: 'cover',
+                        display: 'block',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-main)',
+                        transition: 'transform 0.25s ease'
+                      }}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://via.placeholder.com/225x320?text=Poster';
+                      }}
+                    />
+                    {/* Hover Overlay Hint */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(11, 15, 25, 0.65)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.25rem',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease',
+                        color: '#FFFFFF',
+                        fontSize: '0.72rem',
+                        fontWeight: 600
+                      }}
+                      className="poster-hover-overlay"
+                    >
+                      <Maximize2 size={16} />
+                      <span>View Details</span>
+                    </div>
+                  </div>
+
                   {/* Verified source link */}
                   {cand.sourceUrl && (
                     <a
                       href={cand.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -148,7 +240,7 @@ export default function CandidateList({
                         color: 'var(--accent-cyan)',
                         textDecoration: 'none'
                       }}
-                      title="View catalog record on MyAnimeList / AniList"
+                      title="View verified record on MyAnimeList / AniList"
                     >
                       <ExternalLink size={11} />
                       Catalog Record
@@ -157,13 +249,31 @@ export default function CandidateList({
                 </div>
 
                 {/* Candidate Content Body */}
-                <div style={{ flex: 1, minWidth: '260px' }}>
+                <div style={{ flex: 1, minWidth: '260px', display: 'flex', flexDirection: 'column' }}>
                   {/* Header & Badges */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                      marginBottom: '0.4rem'
+                    }}
+                  >
                     <div>
-                      <h2 style={{ fontSize: '1.18rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                      <h3
+                        style={{
+                          fontSize: '1.2rem',
+                          fontWeight: 800,
+                          color: 'var(--text-primary)',
+                          margin: 0,
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setActiveDrawerAnime(cand)}
+                      >
                         {cand.title}
-                      </h2>
+                      </h3>
                       {cand.englishTitle && cand.englishTitle !== cand.title && (
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                           {cand.englishTitle}
@@ -186,8 +296,17 @@ export default function CandidateList({
                   </div>
 
                   {/* Metadata Chips: Catalog ID, Year, Format, Studio, Episodes, Genres */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                    <span style={{ background: 'rgba(6, 182, 212, 0.12)', color: 'var(--accent-cyan)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.4rem',
+                      fontSize: '0.76rem',
+                      color: 'var(--text-secondary)',
+                      marginBottom: '0.75rem'
+                    }}
+                  >
+                    <span style={{ background: 'rgba(6, 182, 212, 0.12)', color: 'var(--accent-cyan)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
                       ID: #{cand.malId || cand.id}
                     </span>
                     {cand.year && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.year}</span>}
@@ -200,12 +319,30 @@ export default function CandidateList({
                   </div>
 
                   {/* Grounded Synopsis */}
-                  <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: '0.85rem' }}>
+                  <p
+                    style={{
+                      fontSize: '0.86rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.5,
+                      marginBottom: '0.85rem'
+                    }}
+                  >
                     {cand.synopsis}
                   </p>
 
                   {/* Clue Breakdown: Matching, Conflicting, Unverified */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.9rem', fontSize: '0.8rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.35rem',
+                      marginBottom: '0.9rem',
+                      fontSize: '0.8rem',
+                      background: 'rgba(0, 0, 0, 0.15)',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: 'var(--radius-sm)'
+                    }}
+                  >
                     {cand.matchingClues && cand.matchingClues.length > 0 && (
                       <div style={{ color: 'var(--success-text)', display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
                         <span style={{ fontWeight: 700, flexShrink: 0 }}>✓ Matches:</span>
@@ -230,7 +367,15 @@ export default function CandidateList({
 
                   {/* Spoiler Shielding Control */}
                   {cand.spoilerExplanation && (
-                    <div style={{ marginBottom: '1rem', background: 'var(--bg-input)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                    <div
+                      style={{
+                        marginBottom: '1rem',
+                        background: 'var(--bg-input)',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-subtle)'
+                      }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.78rem', color: 'var(--warning-text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           <AlertTriangle size={13} />
@@ -257,15 +402,34 @@ export default function CandidateList({
                       </div>
 
                       {isSpoilerShown && (
-                        <p style={{ marginTop: '0.45rem', fontSize: '0.82rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.45rem', lineHeight: 1.4 }}>
+                        <p
+                          style={{
+                            marginTop: '0.45rem',
+                            fontSize: '0.82rem',
+                            color: 'var(--text-secondary)',
+                            borderTop: '1px solid var(--border-subtle)',
+                            paddingTop: '0.45rem',
+                            lineHeight: 1.45
+                          }}
+                        >
                           {cand.spoilerExplanation}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* Result Feedback Actions */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                  {/* Result Actions Toolbar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '0.45rem',
+                      alignItems: 'center',
+                      borderTop: '1px solid var(--border-subtle)',
+                      paddingTop: '0.75rem',
+                      marginTop: 'auto'
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={() => onConfirmCandidate(cand)}
@@ -313,12 +477,42 @@ export default function CandidateList({
                       <Columns size={13} />
                       {isComparing ? 'Selected' : 'Compare'}
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveDrawerAnime(cand)}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem', marginLeft: 'auto' }}
+                      title="Open full anime details and characters"
+                    >
+                      <Info size={13} />
+                      View Details
+                    </button>
                   </div>
                 </div>
               </article>
             );
           })}
         </div>
+      )}
+
+      {/* Rich Detail Drawer */}
+      {activeDrawerAnime && (
+        <DetailDrawer
+          anime={activeDrawerAnime}
+          onClose={() => setActiveDrawerAnime(null)}
+          onConfirm={(cand) => {
+            onConfirmCandidate(cand);
+            setActiveDrawerAnime(null);
+          }}
+          onExclude={(cand) => {
+            onExcludeCandidate(cand);
+            setActiveDrawerAnime(null);
+          }}
+          onRefine={(cand) => onRefineCandidate(cand)}
+          onCompare={(cand) => handleSelectCompare(cand)}
+          isComparing={selectedForCompare.some(c => c.id === activeDrawerAnime.id)}
+        />
       )}
     </div>
   );

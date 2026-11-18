@@ -2,7 +2,10 @@
 
 **Project Title:** AniRecall  
 **Tagline:** “You remember the scene. We’ll find the anime.”  
+**Developers:** Developed by Mawutorwu Klu and Skythen Therlonge.  
 **Target Duration:** 3–5 Minutes  
+**Live Application:** https://anirecall-j8s1rwnh6-klum-3379.vercel.app  
+**GitHub Repository:** https://github.com/mawu-stack/anirecall  
 
 ---
 

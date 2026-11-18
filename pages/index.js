@@ -11,6 +11,10 @@ import ScreenshotSearch from '../components/ScreenshotSearch';
 import MysteryMode from '../components/MysteryMode';
 import SavedHistory from '../components/SavedHistory';
 import SimilarVibes from '../components/SimilarVibes';
+import VisualExamples from '../components/VisualExamples';
+import VisualClueHelper from '../components/VisualClueHelper';
+import CelebrationModal from '../components/CelebrationModal';
+import Footer from '../components/Footer';
 
 export default function Home() {
   const [currentMode, setCurrentMode] = useState('story'); // 'story' | 'character' | 'screenshot' | 'mystery' | 'history'
@@ -30,6 +34,7 @@ export default function Home() {
   // Modals & sub-flows
   const [comparisonData, setComparisonData] = useState(null);
   const [confirmedAnime, setConfirmedAnime] = useState(null);
+  const [celebrationAnime, setCelebrationAnime] = useState(null);
   const [showSimilarVibes, setShowSimilarVibes] = useState(false);
   const [historyItems, setHistoryItems] = useState([]);
 
@@ -162,8 +167,8 @@ export default function Home() {
   // Confirm candidate ("Found it!")
   const handleConfirmCandidate = (candidate) => {
     setConfirmedAnime(candidate);
+    setCelebrationAnime(candidate);
     saveToHistory(candidate);
-    setShowSimilarVibes(true);
   };
 
   // Exclude candidate ("That's not it")
@@ -262,6 +267,25 @@ export default function Home() {
             searchMode={searchMode}
             onChangeSearchMode={(m) => setSearchMode(m)}
           />
+
+          {/* Visual Clue Selector Helper ("Help Me Remember") */}
+          <VisualClueHelper
+            clues={clues}
+            onUpdateClues={(newClues) => {
+              setClues(newClues);
+              executeSearch({ customClues: newClues });
+            }}
+          />
+
+          {/* Image-backed Example Searches (Prominent when starting a search) */}
+          {candidates.length === 0 && !isLoading && (
+            <VisualExamples
+              onSelectExample={(exampleText) => {
+                setQuery(exampleText);
+                executeSearch({ customQuery: exampleText });
+              }}
+            />
+          )}
 
           {/* Desktop Two-Column Layout */}
           <div className="main-workspace">
@@ -375,10 +399,22 @@ export default function Home() {
       )}
 
       {/* Modals */}
+      {celebrationAnime && (
+        <CelebrationModal
+          anime={celebrationAnime}
+          onClose={() => setCelebrationAnime(null)}
+          onOpenSimilarVibes={() => {
+            setCelebrationAnime(null);
+            setShowSimilarVibes(true);
+          }}
+        />
+      )}
+
       {comparisonData && (
         <CompareModal
           comparisonData={comparisonData}
           onClose={() => setComparisonData(null)}
+          onConfirmCandidate={handleConfirmCandidate}
         />
       )}
 
@@ -392,6 +428,9 @@ export default function Home() {
           }}
         />
       )}
+
+      {/* Global Application Footer with Developer Credits */}
+      <Footer />
     </div>
   );
 }
