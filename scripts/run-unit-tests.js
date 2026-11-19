@@ -6,6 +6,7 @@
 import { runRecallAgent, evaluateCandidateAgainstClues } from '../lib/agent-core.js';
 import { searchAnime, getAnimeDetails, searchCharacters } from '../lib/anime-catalog.js';
 import { VERIFIED_ANIME_FIXTURES } from '../lib/fixture-catalog.js';
+import { isTextJsonCompatibleModel, classifyGeminiError } from '../lib/gemini-client.js';
 
 let passedCount = 0;
 let failedCount = 0;
@@ -526,6 +527,45 @@ async function runUnitTests() {
     assert(typeof res.geminiDiagnostics.errorCode === 'string', `geminiDiagnostics includes sanitized errorCode (Got: ${res.geminiDiagnostics.errorCode})`);
   } catch (err) {
     assert(false, `Test 21 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 22: Model Modality Compatibility Filtering & Historical Setting vs Release Date Distinction
+  console.log('Test 22: Model Modality Compatibility Filtering & Historical Setting vs Release Date Distinction');
+  try {
+    // 1. Model compatibility checks
+    assert(isTextJsonCompatibleModel('gemini-2.5-flash') === true, 'gemini-2.5-flash is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-2.5-pro') === true, 'gemini-2.5-pro is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-2.5-flash-preview-tts') === false, 'gemini-2.5-flash-preview-tts is excluded (TTS modality)');
+    assert(isTextJsonCompatibleModel('gemini-2.5-pro-preview-tts') === false, 'gemini-2.5-pro-preview-tts is excluded (TTS modality)');
+    assert(isTextJsonCompatibleModel('imagen-3.0-generate-002') === false, 'imagen model is excluded (image generation modality)');
+    assert(isTextJsonCompatibleModel('gemini-live-2.5-flash') === false, 'realtime/live model is excluded');
+
+    // 2. Error classification for incompatible models
+    const classified = classifyGeminiError(new Error('INCOMPATIBLE_MODEL: model does not support text output'));
+    assert(classified.code === 'INCOMPATIBLE_MODEL_MODALITY', 'Incompatible model error is classified as INCOMPATIBLE_MODEL_MODALITY');
+
+    // 3. Date extraction: "set in 1930s America" describes the story setting, NOT release year
+    const resHistorical = await runRecallAgent({
+      query: "Immortal gangsters and alchemists on a train called the Flying Pussyfoot in 1930s America."
+    });
+    const settingClue = resHistorical.clues.find(c => c.category === 'setting');
+    const yearClue = resHistorical.clues.find(c => c.category === 'approx_year');
+
+    assert(Boolean(settingClue), `Extracted setting clue: "${settingClue?.text}"`);
+    assert(settingClue?.text.includes('1930s America') || settingClue?.text.includes('Flying Pussyfoot'), 'Setting clue correctly captures setting element');
+    assert(yearClue === undefined, 'Did NOT extract 1930s as release year (properly distinguished story setting from release date)');
+
+    // 4. Genuine release year extraction with explicit wording
+    const resRelease = await runRecallAgent({
+      query: "An anime that was released in 2006 about a dark notebook"
+    });
+    const genuineYearClue = resRelease.clues.find(c => c.category === 'approx_year');
+    assert(Boolean(genuineYearClue), `Extracted release year with explicit wording: "${genuineYearClue?.text}"`);
+    assert(genuineYearClue?.text.includes('2006'), 'Release year correctly identified as 2006');
+  } catch (err) {
+    assert(false, `Test 22 failed with error: ${err.message}`);
   }
 
   console.log('\n=====================================================');
