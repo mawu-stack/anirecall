@@ -535,8 +535,11 @@ async function runUnitTests() {
   console.log('Test 22: Model Modality Compatibility Filtering & Historical Setting vs Release Date Distinction');
   try {
     // 1. Model compatibility checks
-    assert(isTextJsonCompatibleModel('gemini-2.5-flash') === true, 'gemini-2.5-flash is recognized as text/JSON compatible');
-    assert(isTextJsonCompatibleModel('gemini-2.5-pro') === true, 'gemini-2.5-pro is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-flash-lite-latest') === true, 'gemini-flash-lite-latest is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-flash-latest') === true, 'gemini-flash-latest is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-pro-latest') === true, 'gemini-pro-latest is recognized as text/JSON compatible');
+    assert(isTextJsonCompatibleModel('gemini-2.5-flash') === false, 'gemini-2.5-flash is excluded as deprecated/unavailable for new keys');
+    assert(isTextJsonCompatibleModel('gemini-2.5-pro') === false, 'gemini-2.5-pro is excluded as deprecated/unavailable for new keys');
     assert(isTextJsonCompatibleModel('gemini-2.5-flash-preview-tts') === false, 'gemini-2.5-flash-preview-tts is excluded (TTS modality)');
     assert(isTextJsonCompatibleModel('gemini-2.5-pro-preview-tts') === false, 'gemini-2.5-pro-preview-tts is excluded (TTS modality)');
     assert(isTextJsonCompatibleModel('imagen-3.0-generate-002') === false, 'imagen model is excluded (image generation modality)');
