@@ -28,16 +28,19 @@ export default function CandidateList({
   const [revealedSpoilers, setRevealedSpoilers] = useState({});
   const [activeDrawerAnime, setActiveDrawerAnime] = useState(null);
 
-  const toggleSpoiler = (id) => {
+  const getUid = (c) => c?.uid || `${c?.source || 'anilist'}:${c?.id}`;
+
+  const toggleSpoiler = (uid) => {
     setRevealedSpoilers(prev => ({
       ...prev,
-      [id]: !prev[id]
+      [uid]: !prev[uid]
     }));
   };
 
   const handleSelectCompare = (cand) => {
-    if (selectedForCompare.some(c => c.id === cand.id)) {
-      setSelectedForCompare(selectedForCompare.filter(c => c.id !== cand.id));
+    const candUid = getUid(cand);
+    if (selectedForCompare.some(c => getUid(c) === candUid)) {
+      setSelectedForCompare(selectedForCompare.filter(c => getUid(c) !== candUid));
     } else {
       if (selectedForCompare.length === 0) {
         setSelectedForCompare([cand]);
@@ -181,12 +184,13 @@ export default function CandidateList({
       {!isLoading && candidates.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {candidates.map((cand, index) => {
-            const isComparing = selectedForCompare.some(c => c.id === cand.id);
-            const isSpoilerShown = revealedSpoilers[cand.id];
+            const candUid = getUid(cand);
+            const isComparing = selectedForCompare.some(c => getUid(c) === candUid);
+            const isSpoilerShown = revealedSpoilers[candUid];
 
             return (
               <article
-                key={cand.id || index}
+                key={candUid || index}
                 className="panel card-interactive fade-in"
                 style={{
                   display: 'flex',
@@ -424,7 +428,7 @@ export default function CandidateList({
                         </span>
                         <button
                           type="button"
-                          onClick={() => toggleSpoiler(cand.id)}
+                          onClick={() => toggleSpoiler(candUid)}
                           style={{
                             background: 'transparent',
                             border: 'none',
@@ -552,7 +556,7 @@ export default function CandidateList({
           }}
           onRefine={(cand) => onRefineCandidate(cand)}
           onCompare={(cand) => handleSelectCompare(cand)}
-          isComparing={selectedForCompare.some(c => c.id === activeDrawerAnime.id)}
+          isComparing={selectedForCompare.some(c => getUid(c) === getUid(activeDrawerAnime))}
         />
       )}
     </div>

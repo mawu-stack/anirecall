@@ -257,7 +257,10 @@ cd anirecall
 # 2. Install dependencies
 npm install
 
-# 3. Execute test suite (48 assertions)
+# 3. Execute separated test suites
+npm run test:unit      # Fast, deterministic unit & collision suite (61 assertions)
+npm run test:browser   # End-to-end headless browser & localStorage lifecycle test
+npm run test:live      # Live external provider connectivity & Gemini model check
 npm test
 
 # 4. Compile production build

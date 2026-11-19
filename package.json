@@ -8,7 +8,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node scripts/run-tests.js"
+    "test": "node scripts/run-unit-tests.js",
+    "test:unit": "node scripts/run-unit-tests.js",
+    "test:browser": "node scripts/run-browser-tests.js",
+    "test:live": "node scripts/run-live-tests.js"
   },
   "dependencies": {
     "lucide-react": "^0.453.0",

@@ -124,9 +124,9 @@ npm install
 
 # 3. Configure environment variables (Optional)
 cp .env.example .env.local
-# Edit .env.local and add your GEMINI_API_KEY (optional)
+# Edit .env.local and add your GEMINI_API_KEY / GEMINI_MODEL (optional)
 
-# 4. Run automated test suite (48 assertions)
+# 4. Run automated unit test suite (61 assertions)
 npm test
 
 # 5. Start development server
@@ -139,30 +139,55 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🔑 Environment Variables
 
-AniRecall functions fully out-of-the-box in **Curated Ground-Truth Catalog Mode** without any API keys. To enable live generative AI extraction and reasoning, add your Gemini API key:
+AniRecall functions fully out-of-the-box in **Curated Ground-Truth Catalog Mode** without any API keys. To enable live generative AI extraction and reasoning, configure your server-side environment:
 
 ```env
 # .env.local
 GEMINI_API_KEY=your_google_gemini_api_key_here
+GEMINI_MODEL=gemini-1.5-flash
 PORT=3000
 ```
-Get a free API key at [Google AI Studio](https://aistudio.google.com/app/apikey).
+Get a free API key at [Google AI Studio](https://aistudio.google.com/app/apikey). The Gemini model is configurable via `GEMINI_MODEL` (defaults to `gemini-1.5-flash`).
 
 ---
 
 ## 🧪 Testing & Verification
 
-Run the test suite with:
+AniRecall separates testing into dedicated unit, browser, and live provider suites:
+
 ```bash
+# 1. Deterministic unit & fixture suite (61 assertions, zero network required)
+npm run test:unit
+
+# 2. End-to-end browser test with real localStorage read/write/rehydrate lifecycle
+npm run test:browser
+
+# 3. Live provider test (checks AniList GraphQL & Google Gemini API if key is present)
+npm run test:live
+
+# Default test runner
 npm test
 ```
-The automated test runner executes 16 comprehensive integration test suites (48 assertions total):
+
+The automated unit test runner executes 18 comprehensive integration test suites (61 assertions total):
 1. Recognizable plot description (Steins;Gate)
 2. Ambiguous description generating discriminating follow-up questions
 3. Uncertain (`maybe`) clue handling as soft preference (Bunny Girl Senpai)
 4. Candidate rejection (`"That's not it"`) and exclusion preservation across turns
 5. Character finder appearance & trait matching (Ken Kaneki / Tokyo Ghoul)
 6. No-match / ungrounded query rejection (zero hallucinations)
+7. Watched year vs release year distinction (90s mecha watched in 2021)
+8. Incorrect "sure" clue handling (flags discrepancy without crashing)
+9. Missing credentials / graceful fallback mode disclosure
+10. Non-repeating discriminating follow-up questions
+11. End-to-end multi-turn interaction sequence
+12. In-memory caching and request rate limiting resilience
+13. Grounding accuracy & atomic evidence salience (Naruto strictly excludes Vinland Saga and Demon Slayer)
+14. Dedicated exact title search mode (Cowboy Bebop)
+15. Clue persistence & refinement isolation (does not resurrect deleted clues)
+16. Namespaced catalog IDs (`anilist:<id>` vs `mal:<id>`)
+17. **Cross-provider ID collision regression:** Verifies anime sharing identical numeric IDs across AniList and MAL (e.g. ID 1535) are preserved independently in deduplication, exclusions, comparison, and saved history.
+18. **Strict provider status attribution:** Verifies `ai_success` is strictly restricted to successful live Gemini responses; exact title search and clue refinements accurately report `exact_title_lookup` and `refinement_curated`.
 7. Watched year vs. production release year distinction (Neon Genesis Evangelion)
 8. Conflicting "Sure" clue flagging without discarding candidates (Death Note)
 9. Missing credentials graceful fallback & fixture transparency disclosure

@@ -56,8 +56,12 @@ export default function Home() {
     }
   }, []);
 
+  // Helper to ensure canonical namespaced UID across providers
+  const getAnimeUid = (a) => a?.uid || `${a?.source || 'anilist'}:${a?.id}`;
+
   // Save history to localStorage
   const saveToHistory = (anime) => {
+    const animeUid = getAnimeUid(anime);
     const newItem = {
       id: `saved-${Date.now()}`,
       anime,
@@ -66,7 +70,7 @@ export default function Home() {
       timestamp: Date.now()
     };
 
-    const updated = [newItem, ...historyItems.filter(h => (h.anime.uid || h.anime.id) !== (anime.uid || anime.id))];
+    const updated = [newItem, ...historyItems.filter(h => getAnimeUid(h.anime) !== animeUid)];
     setHistoryItems(updated);
     try {
       localStorage.setItem('anirecall_history', JSON.stringify(updated));
@@ -243,8 +247,8 @@ export default function Home() {
 
   // Exclude candidate ("That's not it")
   const handleExcludeCandidate = (candidate) => {
-    const candidateId = candidate.uid || candidate.id;
-    const updatedExcluded = [...excludedIds, candidateId];
+    const candidateUid = getAnimeUid(candidate);
+    const updatedExcluded = [...excludedIds, candidateUid];
     setExcludedIds(updatedExcluded);
     // Re-filter immediately excluding this candidate
     executeSearch({ customExcluded: updatedExcluded, isRefinement: true });
@@ -268,8 +272,8 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id1: cand1.uid || cand1.id,
-          id2: cand2.uid || cand2.id,
+          id1: getAnimeUid(cand1),
+          id2: getAnimeUid(cand2),
           clues
         })
       });

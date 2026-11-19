@@ -6,8 +6,29 @@ export default function Header({ currentMode, onSelectMode, isDemoMode, provider
   const renderStatusBadge = () => {
     if (providerStatus === 'ai_success') {
       return (
-        <span className="badge badge-strong" title="Google Gemini 1.5 Pro/Flash active for semantic extraction">
-          Live AI Agent Active (Google Gemini 1.5 + AniList GraphQL)
+        <span className="badge badge-strong" title="Google Gemini active for semantic extraction">
+          Live AI Agent Active (Google Gemini + AniList GraphQL)
+        </span>
+      );
+    }
+    if (providerStatus === 'exact_title_lookup') {
+      return (
+        <span className="badge badge-demo" style={{ background: 'rgba(6, 182, 212, 0.15)', color: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)' }} title="Direct title match against catalog without LLM invocation">
+          Exact Title Search (Direct Catalog Lookup)
+        </span>
+      );
+    }
+    if (providerStatus === 'refinement_curated') {
+      return (
+        <span className="badge badge-demo" style={{ background: 'rgba(139, 92, 246, 0.15)', color: 'var(--accent-violet)', border: '1px solid var(--accent-violet)' }} title="Refined using active curated memory clues and catalog filters">
+          Curated Clue Refinement (Active Clue Filter)
+        </span>
+      );
+    }
+    if (providerStatus === 'extraction_failed') {
+      return (
+        <span className="badge badge-warning" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} title="AI extraction returned unparseable output. Seamlessly fallen back to deterministic catalog rules.">
+          AI Extraction Fallback (Deterministic Catalog Mode)
         </span>
       );
     }
