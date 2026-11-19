@@ -261,6 +261,7 @@ export default function SavedHistory({
                           className="btn-ghost"
                           style={{ padding: '0.25rem 0.45rem', color: 'var(--danger-text)' }}
                           title="Remove from saved collection"
+                          aria-label="Remove from saved collection"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -318,6 +319,7 @@ export default function SavedHistory({
                           className="btn-ghost"
                           style={{ color: 'var(--danger-text)', padding: '0.3rem' }}
                           title="Remove from history"
+                          aria-label="Remove from saved collection"
                         >
                           <Trash2 size={15} />
                         </button>

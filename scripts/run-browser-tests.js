@@ -230,10 +230,10 @@ async function runBrowserTests() {
   // 6.4: Test Deleting an item updates localStorage in real time
   console.log('  Testing Delete button in saved collection...');
   await client.evaluate(`
-    const delBtn = document.querySelector('button[aria-label^="Delete"]');
+    const delBtn = document.querySelector('button[aria-label="Remove from saved collection"]') || document.querySelector('button[title*="Remove"]');
     if (delBtn) delBtn.click();
   `);
-  await sleep(500);
+  await sleep(600);
 
   const storageAfterDelete = await client.evaluate("window.localStorage.getItem('anirecall_history')");
   const parsedAfterDelete = JSON.parse(storageAfterDelete || '[]');
