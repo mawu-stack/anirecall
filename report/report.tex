@@ -60,7 +60,7 @@
 \maketitle
 
 \begin{abstract}
-Anime discovery traditionally relies on exact title searches or keyword lookups that require users to recall precise names. However, human autobiographical and episodic memory of animated media is overwhelmingly characterized by perceptual fragments: unusual scenes, distinctive outfits, character superpowers, emotional plot twists, approximate eras, or viewing contexts (e.g., viewing platform or personal watch year). This report presents \textbf{AniRecall}, an open-source, full-stack web application powered by an autonomous, tool-using AI agent designed to bridge the gap between vague human memories and structured media catalogs. The system introduces structured memory clue extraction (with explicit certainty tagging into ``Sure'' and ``Maybe''), grounded candidate verification against official AniList GraphQL and Jikan (MyAnimeList) APIs, automated side-by-side comparison matrices, negative candidate exclusions, spoiler-shielded explanations, character-specific attribute retrieval, screenshot frame-matching via Trace.moe, server-side mystery guessing validation, and privacy-preserving client-side collection persistence. Automated integration testing across 16 critical test suites (48 assertions) demonstrates 100\% observed verification accuracy on benchmark episodic recall queries with zero false-positive hallucinations.
+Anime discovery traditionally relies on exact title searches or keyword lookups that require users to recall precise names. However, human autobiographical and episodic memory of animated media is overwhelmingly characterized by perceptual fragments: unusual scenes, distinctive outfits, character superpowers, emotional plot twists, approximate eras, or viewing contexts (e.g., viewing platform or personal watch year). This report presents \textbf{AniRecall}, an open-source, full-stack web application powered by an autonomous, tool-using AI agent designed to bridge the gap between vague human memories and structured media catalogs. The system introduces structured memory clue extraction (with explicit certainty tagging into ``Sure'' and ``Maybe''), grounded candidate verification against official AniList GraphQL and Jikan (MyAnimeList) APIs, automated side-by-side comparison matrices, negative candidate exclusions, spoiler-shielded explanations, character-specific attribute retrieval, screenshot frame-matching via Trace.moe, server-side mystery guessing validation, and privacy-preserving client-side collection persistence. Automated integration testing across 21 critical test suites (74 assertions) demonstrates comprehensive verification on benchmark episodic recall queries with grounded catalog verification and salience-gated entity matching.
 \end{abstract}
 
 \vspace{0.5em}
@@ -179,7 +179,33 @@ As an optional visual extension, AniRecall integrates with the Trace.moe anime f
 AniRecall includes an isolated \textit{Mystery Mode}. The engine serves progressive clues across five difficulty tiers (Era $\to$ Genres $\to$ Character Silhouette $\to$ Iconic Scene $\to$ Shielded Spoiler). To guarantee academic integrity and prevent developer-tool cheating, answers are validated entirely server-side and are never exposed in the initial client payload.
 
 \subsection{Found It! Collection and Client-Side Persistence}
-Confirmed anime titles are preserved with the user's original query text in browser \texttt{localStorage}. No remote accounts, user tracking, or cloud databases are used, ensuring complete search confidentiality.
+Confirmed anime titles are preserved with the user's original query text in browser \texttt{localStorage}. No remote accounts or cloud databases are required, ensuring search privacy.
+
+\section{Application Interface and Visual Experience}
+\label{sec:screenshots}
+
+Figures~\ref{fig:home}, \ref{fig:results}, and \ref{fig:drawer} illustrate the live AniRecall interface captured directly from the production deployment.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{screenshot-home.png}
+\caption{AniRecall Welcome Interface: Featuring the primary natural language search bar, navigation mode tabs (Story, Character, Screenshot, Mystery, Saved Collection), and compact image-backed memory examples.}
+\label{fig:home}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{screenshot-results.png}
+\caption{Candidate Results Card: Displaying enlarged poster artwork ($155\text{px} \times 220\text{px}$), the structured ``Why it fits'' evidence box highlighting 2--3 grounded matches, concise metadata chips, spoiler shielding, and primary action controls (\textit{Found it!}, \textit{Not this one}, \textit{Refine}, \textit{Compare}, and \textit{View Details}).}
+\label{fig:results}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{screenshot-drawer.png}
+\caption{Rich Anime Detail Drawer: Accessible modal view providing the full unabridged catalog synopsis, complete studio and episode metadata, full main character cast gallery with voice actor roles, and direct catalog links to AniList and MyAnimeList.}
+\label{fig:drawer}
+\end{figure}
 
 \section{Empirical Evaluation and Test Results}
 \label{sec:evaluation}
@@ -217,7 +243,7 @@ The system was evaluated through an automated verification suite (\texttt{script
 \textbf{Suite 20} & Evidence Quality Grounding & 4 / 4 & \textbf{PASS} & Missing synopsis details marked Unverified (not Conflicted); real year gaps marked Conflicted. \\
 \textbf{Suite 21} & Server Diagnostics Object & 4 / 4 & \textbf{PASS} & Returns active model (\texttt{gemini-2.5-flash}) and sanitized diagnostic codes. \\
 \midrule
-\textbf{Summary} & \textbf{All 21 Verification Suites} & \textbf{74 / 74} & \textbf{100\% PASS} & \textbf{Zero hallucinations; verified catalog grounding.} \\
+\textbf{Summary} & \textbf{All 21 Verification Suites} & \textbf{74 / 74} & \textbf{100\% PASS} & \textbf{Verified catalog grounding across all benchmark categories.} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -225,8 +251,8 @@ The system was evaluated through an automated verification suite (\texttt{script
 \subsection{Dual-Execution Modes: Live AI vs. Curated Catalog}
 AniRecall supports two operational modes:
 \begin{itemize}[noitemsep]
-    \item \textbf{Curated Ground-Truth Catalog Mode (Default):} Operates deterministically without external credentials using an embedded database of 27 verified anime covering diverse eras (1990s--2020s), genres, and formats.
-    \item \textbf{Live AI Agent Mode:} Activated when \texttt{GEMINI\_API\_KEY} is supplied in \texttt{.env.local}, enabling open-ended semantic clue parsing and live external API queries.
+    \item \textbf{Curated Ground-Truth Catalog Mode (Default):} Operates deterministically without external credentials using an embedded database of 28 verified anime covering diverse eras (1990s--2020s), genres, and formats.
+    \item \textbf{Live AI Agent Mode:} Activated when \texttt{GEMINI\_API\_KEY} is supplied in the server environment, enabling open-ended semantic clue parsing via Google Gemini (\texttt{gemini-2.5-flash}) with request-scoped diagnostics and bounded model fallback.
 \end{itemize}
 In accordance with academic integrity guidelines, any fixture-based search is explicitly badged in the user interface as \texttt{Curated Ground-Truth Catalog Mode} and never falsely presented as live generative inference.
 
@@ -245,9 +271,9 @@ In accordance with academic integrity guidelines, any fixture-based search is ex
 \label{sec:limitations}
 
 \begin{itemize}[noitemsep]
-    \item \textbf{High-Level Synopsis Granularity:} Official catalog synopses frequently omit obscure background gags, minor dialogue snippets, or fleeting side characters. While the agent acknowledges these as ``Unverified'' rather than hallucinating, integrating vector embeddings of episodic subtitle transcripts represents a promising future expansion.
+    \item \textbf{High-Level Synopsis Granularity:} Official catalog synopses frequently omit obscure background gags, minor dialogue snippets, or fleeting side characters. The agent acknowledges these as ``Unverified'' rather than generating ungrounded claims.
     \item \textbf{Manga vs. Anime Divergence:} Users occasionally recall scenes exclusive to original light novels or manga that were cut from animated television adaptations.
-    \item \textbf{Optical Character Recognition (OCR) for Subtitles:} Enhancing screenshot search with on-device OCR could allow matching fansubbed dialogue directly against subtitle databases.
+    \item \textbf{Third-Party API Dependency:} Screenshot recognition depends on upstream availability from the external Trace.moe community service.
 \end{itemize}
 
 \section{Reproducibility and Compilation Instructions}
@@ -263,7 +289,7 @@ cd anirecall
 npm install
 
 # 3. Execute separated test suites
-npm run test:unit      # Fast, deterministic unit & collision suite (61 assertions)
+npm run test:unit      # Fast, deterministic unit & collision suite (74 assertions)
 npm run test:browser   # End-to-end headless browser & localStorage lifecycle test
 npm run test:live      # Live external provider connectivity & Gemini model check
 npm test
@@ -290,7 +316,7 @@ Alternatively, this report is compiled directly using the standalone Tectonic Xe
 \section{Conclusion}
 \label{sec:conclusion}
 
-AniRecall demonstrates an effective, grounded, and privacy-preserving application of tool-using AI agents for multimedia discovery. By decomposing human episodic recollections into typed, editable clue chips and cross-referencing candidate media against verified catalog records with salience-gated verification, the system eliminates LLM hallucinations, respects narrative spoiler boundaries, and provides an intuitive, accessible discovery experience for anime enthusiasts.
+AniRecall demonstrates an effective, grounded, and privacy-preserving application of tool-using AI agents for multimedia discovery. By decomposing human episodic recollections into typed, editable clue chips and cross-referencing candidate media against verified catalog records with salience-gated verification, the system guards against ungrounded candidate claims, respects narrative spoiler boundaries, and provides an intuitive, accessible discovery experience for anime enthusiasts.
 
 \begin{thebibliography}{99}
 \bibitem{anilist} AniList.co, ``AniList GraphQL API Documentation v2,'' \url{https://anilist.gitbook.io/anilist-apiv2-docs/}, 2024.
