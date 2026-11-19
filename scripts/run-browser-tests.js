@@ -134,15 +134,35 @@ async function runBrowserTests() {
 
   // Check 3: Visual Example Cards Click & Clue Extraction
   console.log('\n3. Verifying Image-Backed Example Cards...');
-  const exampleCount = await client.evaluate("document.querySelectorAll('[aria-label^=\"Select example\"]').length");
-  console.log(`  ✓ Found ${exampleCount} visual example cards`);
-  if (exampleCount < 5) throw new Error('Expected at least 5 visual example cards');
+  const initialExampleCount = await client.evaluate("document.querySelectorAll('[aria-label^=\"Select example\"]').length");
+  console.log(`  ✓ Found ${initialExampleCount} initial visual example cards (compact 3-card layout)`);
+  if (initialExampleCount !== 3) throw new Error(`Expected 3 initial visual example cards, got ${initialExampleCount}`);
+
+  // Test expanding remaining examples
+  await client.evaluate(`
+    const expandBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Show more memory examples'));
+    if (expandBtn) expandBtn.click();
+  `);
+  await sleep(400);
+
+  const expandedCount = await client.evaluate("document.querySelectorAll('[aria-label^=\"Select example\"]').length");
+  console.log(`  ✓ Expanded visual example cards count: ${expandedCount}`);
+  if (expandedCount < 5) throw new Error(`Expected at least 5 visual example cards after expand, got ${expandedCount}`);
 
   console.log('  Testing click on Steins;Gate example card...');
-  await client.evaluate("document.querySelectorAll('[aria-label^=\"Select example\"]')[0].click()");
-  await sleep(3500);
+  await client.evaluate(`
+    const steinsCard = Array.from(document.querySelectorAll('[aria-label^=\"Select example\"]')).find(el => el.innerText.includes('Microwave') || el.innerText.includes('Steins'));
+    if (steinsCard) steinsCard.click();
+    else document.querySelectorAll('[aria-label^=\"Select example\"]')[0].click();
+  `);
 
-  const topCandidateTitle = await client.evaluate("document.querySelector('article.panel h3')?.innerText");
+  let topCandidateTitle = null;
+  for (let i = 0; i < 30; i++) {
+    await sleep(500);
+    topCandidateTitle = await client.evaluate("document.querySelector('article.panel h3')?.innerText");
+    if (topCandidateTitle) break;
+  }
+
   console.log(`  ✓ Top candidate title: "${topCandidateTitle}"`);
   if (!topCandidateTitle?.includes('Steins;Gate')) {
     throw new Error(`Expected Steins;Gate, got ${topCandidateTitle}`);
