@@ -26,7 +26,8 @@ export default async function handler(req, res) {
       followUpAnswer = null,
       mode = 'story',
       answeredCategories = [],
-      previousQuestions = []
+      previousQuestions = [],
+      isRefinement = false
     } = req.body || {};
 
     // Validate input types and limits
@@ -54,7 +55,8 @@ export default async function handler(req, res) {
       followUpAnswer,
       mode,
       answeredCategories: Array.isArray(answeredCategories) ? answeredCategories : [],
-      previousQuestions: Array.isArray(previousQuestions) ? previousQuestions : []
+      previousQuestions: Array.isArray(previousQuestions) ? previousQuestions : [],
+      isRefinement: Boolean(isRefinement)
     });
 
     return res.status(200).json({

@@ -48,10 +48,10 @@ export default function ScreenshotSearch({ onSelectAnime }) {
     setErrorMsg('');
     setResult(null);
 
-    // Validate size (max 5MB)
+    // Validate size (max 3.0MB to stay safely under Vercel serverless request body limits)
     const sizeInMB = file.size / (1024 * 1024);
-    if (sizeInMB > 5.0) {
-      setErrorMsg(`File size is ${sizeInMB.toFixed(2)} MB, which exceeds the 5 MB limit.`);
+    if (sizeInMB > 3.0) {
+      setErrorMsg(`File size is ${sizeInMB.toFixed(2)} MB, which exceeds the 3.0 MB limit. Please compress or crop the screenshot before uploading.`);
       return;
     }
 

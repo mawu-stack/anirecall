@@ -39,13 +39,16 @@ export default function CandidateList({
     if (selectedForCompare.some(c => c.id === cand.id)) {
       setSelectedForCompare(selectedForCompare.filter(c => c.id !== cand.id));
     } else {
-      if (selectedForCompare.length < 2) {
-        const next = [...selectedForCompare, cand];
+      if (selectedForCompare.length === 0) {
+        setSelectedForCompare([cand]);
+      } else if (selectedForCompare.length === 1) {
+        const next = [selectedForCompare[0], cand];
         setSelectedForCompare(next);
-        if (next.length === 2) {
-          onCompareCandidates(next[0], next[1]);
-          setSelectedForCompare([]);
-        }
+        onCompareCandidates(next[0], next[1]);
+      } else {
+        const next = [selectedForCompare[0], cand];
+        setSelectedForCompare(next);
+        onCompareCandidates(next[0], next[1]);
       }
     }
   };
@@ -75,33 +78,66 @@ export default function CandidateList({
         </div>
       )}
 
-      {/* Compare selection indicator */}
-      {selectedForCompare.length === 1 && (
+      {/* Compare selection indicator bar */}
+      {selectedForCompare.length > 0 && (
         <div
           className="fade-in"
           style={{
-            background: 'rgba(139, 92, 246, 0.15)',
-            border: '1px solid var(--accent-violet)',
+            position: 'sticky',
+            top: '0.75rem',
+            zIndex: 30,
+            background: 'var(--bg-card)',
+            border: '2px solid var(--accent-violet)',
             borderRadius: 'var(--radius-md)',
-            padding: '0.65rem 1rem',
-            marginBottom: '1rem',
+            padding: '0.75rem 1rem',
+            marginBottom: '1.25rem',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: '0.85rem'
+            gap: '0.75rem',
+            flexWrap: 'wrap'
           }}
         >
-          <span>
-            Selected <strong>{selectedForCompare[0].title}</strong>. Click "Compare" on a second anime to see side-by-side differences.
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedForCompare([])}
-            className="btn btn-ghost"
-            style={{ padding: '0.2rem 0.5rem', fontSize: '0.78rem' }}
-          >
-            Cancel
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Columns size={16} color="var(--accent-cyan)" />
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Comparison Queue:
+            </span>
+            <span style={{ background: 'var(--bg-input)', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.82rem', border: '1px solid var(--border-subtle)', color: 'var(--accent-violet-light)' }}>
+              1. {selectedForCompare[0].title}
+            </span>
+            {selectedForCompare.length === 2 ? (
+              <span style={{ background: 'var(--bg-input)', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.82rem', border: '1px solid var(--border-subtle)', color: 'var(--accent-cyan)' }}>
+                2. {selectedForCompare[1].title}
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                (Click "Compare" on a second anime to see side-by-side differences)
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+            {selectedForCompare.length === 2 && (
+              <button
+                type="button"
+                onClick={() => onCompareCandidates(selectedForCompare[0], selectedForCompare[1])}
+                className="btn btn-primary"
+                style={{ fontSize: '0.82rem', padding: '0.35rem 0.85rem' }}
+              >
+                Compare Side-by-Side
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setSelectedForCompare([])}
+              className="btn btn-ghost"
+              style={{ padding: '0.25rem 0.55rem', fontSize: '0.78rem' }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -166,22 +202,28 @@ export default function CandidateList({
                   style={{
                     flexShrink: 0,
                     width: '135px',
-                    position: 'relative',
-                    cursor: 'pointer'
+                    position: 'relative'
                   }}
-                  onClick={() => setActiveDrawerAnime(cand)}
-                  title="Click to open rich details, characters, and scenes drawer"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setActiveDrawerAnime(cand);
-                    }
-                  }}
-                  aria-label={`View full details for ${cand.title}`}
                 >
-                  <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setActiveDrawerAnime(cand)}
+                    title="Click to open rich details, characters, and scenes drawer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveDrawerAnime(cand);
+                      }
+                    }}
+                    aria-label={`View full details for ${cand.title}`}
+                  >
                     <img
                       src={cand.posterUrl || 'https://via.placeholder.com/225x320?text=No+Poster'}
                       alt={`Official poster for ${cand.title}`}
@@ -223,13 +265,12 @@ export default function CandidateList({
                     </div>
                   </div>
 
-                  {/* Verified source link */}
+                  {/* Verified source link outside the button */}
                   {cand.sourceUrl && (
                     <a
                       href={cand.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
                       style={{
                         display: 'flex',
                         alignItems: 'center',

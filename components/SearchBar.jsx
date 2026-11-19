@@ -1,6 +1,6 @@
 // components/SearchBar.jsx
 import React from 'react';
-import { Search, Sparkles, X, ArrowRight } from 'lucide-react';
+import { Search, Sparkles, X, RotateCcw } from 'lucide-react';
 
 const EXAMPLE_PROMPTS = [
   {
@@ -37,6 +37,8 @@ export default function SearchBar({
   query,
   onChangeQuery,
   onSearch,
+  onNewSearch,
+  hasActiveSearch = false,
   isLoading,
   searchMode,
   onChangeSearchMode
@@ -58,7 +60,7 @@ export default function SearchBar({
   return (
     <div className="panel" style={{ marginBottom: '1.5rem' }}>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <label
             htmlFor="recall-input"
             style={{
@@ -74,40 +76,62 @@ export default function SearchBar({
             What do you remember?
           </label>
 
-          {/* Search Mode Toggle */}
-          <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg-main)', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
-            <button
-              type="button"
-              onClick={() => onChangeSearchMode('story')}
-              style={{
-                background: searchMode === 'story' ? 'var(--accent-violet)' : 'transparent',
-                color: searchMode === 'story' ? '#FFFFFF' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '0.2rem 0.55rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                fontWeight: 600
-              }}
-            >
-              Story / Scene
-            </button>
-            <button
-              type="button"
-              onClick={() => onChangeSearchMode('title')}
-              style={{
-                background: searchMode === 'title' ? 'var(--accent-violet)' : 'transparent',
-                color: searchMode === 'title' ? '#FFFFFF' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '0.2rem 0.55rem',
-                borderRadius: '4px',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                fontWeight: 600
-              }}
-            >
-              Exact Title
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Explicit New Search Control */}
+            {hasActiveSearch && (
+              <button
+                type="button"
+                onClick={() => onNewSearch()}
+                className="btn btn-secondary"
+                style={{
+                  padding: '0.25rem 0.65rem',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+                title="Reset clues, candidate history, exclusions, and start fresh"
+              >
+                <RotateCcw size={13} />
+                <span>New Search</span>
+              </button>
+            )}
+
+            {/* Search Mode Toggle */}
+            <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg-main)', padding: '0.2rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+              <button
+                type="button"
+                onClick={() => onChangeSearchMode('story')}
+                style={{
+                  background: searchMode === 'story' ? 'var(--accent-violet)' : 'transparent',
+                  color: searchMode === 'story' ? '#FFFFFF' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Story / Scene
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeSearchMode('title')}
+                style={{
+                  background: searchMode === 'title' ? 'var(--accent-violet)' : 'transparent',
+                  color: searchMode === 'title' ? '#FFFFFF' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Exact Title
+              </button>
+            </div>
           </div>
         </div>
 
@@ -185,7 +209,11 @@ export default function SearchBar({
               key={idx}
               type="button"
               onClick={() => {
-                onChangeQuery(ex.text);
+                if (onNewSearch) {
+                  onNewSearch(ex.text);
+                } else {
+                  onChangeQuery(ex.text);
+                }
               }}
               style={{
                 background: 'rgba(255, 255, 255, 0.04)',

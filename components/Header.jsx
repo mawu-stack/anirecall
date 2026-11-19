@@ -2,7 +2,36 @@
 import React from 'react';
 import { Search, User, HelpCircle, Image as ImageIcon, BookmarkCheck, Sparkles } from 'lucide-react';
 
-export default function Header({ currentMode, onSelectMode, isDemoMode }) {
+export default function Header({ currentMode, onSelectMode, isDemoMode, providerStatus = 'missing_credentials' }) {
+  const renderStatusBadge = () => {
+    if (providerStatus === 'ai_success') {
+      return (
+        <span className="badge badge-strong" title="Google Gemini 1.5 Pro/Flash active for semantic extraction">
+          Live AI Agent Active (Google Gemini 1.5 + AniList GraphQL)
+        </span>
+      );
+    }
+    if (providerStatus === 'rate_limited') {
+      return (
+        <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning-text)', border: '1px solid var(--warning-border)' }} title="API Rate Limit reached. Running via local verified fixtures.">
+          Provider Rate Limited (Curated Catalog Fallback Mode)
+        </span>
+      );
+    }
+    if (providerStatus === 'fallback_fixture') {
+      return (
+        <span className="badge badge-demo" title="Deterministic NLP extraction grounded in catalog records">
+          Curated Ground-Truth Catalog Mode (Deterministic NLP Grounding)
+        </span>
+      );
+    }
+    return (
+      <span className="badge badge-demo" title="Add GEMINI_API_KEY to server environment for open-ended LLM inference">
+        Curated Ground-Truth Catalog Mode (Verified MAL/AniList Grounding)
+      </span>
+    );
+  };
+
   return (
     <header style={{ textAlign: 'center', paddingTop: '1rem', marginBottom: '1.75rem' }}>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
@@ -52,15 +81,7 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
 
       {/* Status Badges & Attribution */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        {isDemoMode ? (
-          <span className="badge badge-demo" title="Add GEMINI_API_KEY to .env.local for open-ended LLM inference">
-            Curated Ground-Truth Catalog Mode (Verified MAL/AniList Grounding)
-          </span>
-        ) : (
-          <span className="badge badge-strong">
-            Live AI Agent Active (Google Gemini + AniList/Jikan APIs)
-          </span>
-        )}
+        {renderStatusBadge()}
 
         <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', background: 'var(--bg-input)', padding: '0.2rem 0.55rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)' }}>
           Catalog Artwork & Records via AniList & MyAnimeList
@@ -99,7 +120,7 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
         <button
           className={`nav-tab ${currentMode === 'mystery' ? 'active' : ''}`}
           onClick={() => onSelectMode('mystery')}
-          aria-label="Mystery Guessing Game"
+          aria-label="Mystery Mode"
         >
           <HelpCircle size={15} />
           Mystery Mode
@@ -108,10 +129,10 @@ export default function Header({ currentMode, onSelectMode, isDemoMode }) {
         <button
           className={`nav-tab ${currentMode === 'history' ? 'active' : ''}`}
           onClick={() => onSelectMode('history')}
-          aria-label="Saved Confirmed Anime Collection"
+          aria-label="Saved Discoveries"
         >
           <BookmarkCheck size={15} />
-          Found It! Collection
+          Saved Discoveries
         </button>
       </nav>
     </header>

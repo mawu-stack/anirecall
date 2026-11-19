@@ -1,7 +1,8 @@
 // pages/api/agent/compare.js
-// Side-by-side candidate comparison endpoint.
+// Side-by-side candidate comparison endpoint using the unified grounded clue evaluation function.
 
 import { getAnimeDetails } from '../../../lib/anime-catalog.js';
+import { evaluateCandidateAgainstClues } from '../../../lib/agent-core.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -16,57 +17,72 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Both id1 and id2 are required for comparison.' });
     }
 
-    const [anime1, anime2] = await Promise.all([
+    const [anime1Raw, anime2Raw] = await Promise.all([
       getAnimeDetails(id1),
       getAnimeDetails(id2)
     ]);
 
-    if (!anime1 || !anime2) {
+    if (!anime1Raw || !anime2Raw) {
       return res.status(404).json({ error: 'One or both anime records could not be found.' });
     }
+
+    // Run unified evaluation against user's memory clues
+    const eval1 = evaluateCandidateAgainstClues(anime1Raw, clues);
+    const eval2 = evaluateCandidateAgainstClues(anime2Raw, clues);
 
     // Build comparison matrix
     const comparison = {
       anime1: {
-        id: anime1.id,
-        title: anime1.title,
-        year: anime1.year || 'Unknown',
-        format: anime1.format || 'Unknown',
-        episodes: anime1.episodes || 'Unknown',
-        studio: anime1.studio || 'Unknown',
-        genres: anime1.genres || [],
-        posterUrl: anime1.posterUrl,
-        sourceUrl: anime1.sourceUrl,
-        synopsis: anime1.synopsis
+        id: eval1.id,
+        uid: eval1.uid,
+        title: eval1.title,
+        englishTitle: eval1.englishTitle,
+        year: eval1.year || 'Unknown',
+        format: eval1.format || 'Unknown',
+        episodes: eval1.episodes || 'Unknown',
+        studio: eval1.studio || 'Unknown',
+        genres: eval1.genres || [],
+        posterUrl: eval1.posterUrl,
+        sourceUrl: eval1.sourceUrl,
+        synopsis: eval1.synopsis,
+        score: eval1.score,
+        matchTier: eval1.matchTier,
+        matchingClues: eval1.matchingClues,
+        conflictingClues: eval1.conflictingClues
       },
       anime2: {
-        id: anime2.id,
-        title: anime2.title,
-        year: anime2.year || 'Unknown',
-        format: anime2.format || 'Unknown',
-        episodes: anime2.episodes || 'Unknown',
-        studio: anime2.studio || 'Unknown',
-        genres: anime2.genres || [],
-        posterUrl: anime2.posterUrl,
-        sourceUrl: anime2.sourceUrl,
-        synopsis: anime2.synopsis
+        id: eval2.id,
+        uid: eval2.uid,
+        title: eval2.title,
+        englishTitle: eval2.englishTitle,
+        year: eval2.year || 'Unknown',
+        format: eval2.format || 'Unknown',
+        episodes: eval2.episodes || 'Unknown',
+        studio: eval2.studio || 'Unknown',
+        genres: eval2.genres || [],
+        posterUrl: eval2.posterUrl,
+        sourceUrl: eval2.sourceUrl,
+        synopsis: eval2.synopsis,
+        score: eval2.score,
+        matchTier: eval2.matchTier,
+        matchingClues: eval2.matchingClues,
+        conflictingClues: eval2.conflictingClues
       },
       clueBreakdown: clues.map(clue => {
-        const textLower = clue.text.toLowerCase();
-        const corpus1 = [anime1.title, anime1.synopsis, ...(anime1.genres || []), ...(anime1.scenes || [])].join(' ').toLowerCase();
-        const corpus2 = [anime2.title, anime2.synopsis, ...(anime2.genres || []), ...(anime2.scenes || [])].join(' ').toLowerCase();
+        const isMatch1 = eval1.matchingClues.some(m => m.includes(clue.text));
+        const isConflict1 = eval1.conflictingClues.some(c => c.includes(clue.text) || c.includes(candFormatSnippet(clue, eval1)));
 
-        const match1 = corpus1.includes(textLower) || checkTokens(textLower, corpus1);
-        const match2 = corpus2.includes(textLower) || checkTokens(textLower, corpus2);
+        const isMatch2 = eval2.matchingClues.some(m => m.includes(clue.text));
+        const isConflict2 = eval2.conflictingClues.some(c => c.includes(clue.text) || c.includes(candFormatSnippet(clue, eval2)));
 
         return {
           clueText: clue.text,
           category: clue.category,
-          statusAnime1: match1 ? 'Matches' : 'Unverified in synopsis',
-          statusAnime2: match2 ? 'Matches' : 'Unverified in synopsis'
+          statusAnime1: isMatch1 ? 'Matches' : (isConflict1 ? 'Conflicts' : 'Unverified'),
+          statusAnime2: isMatch2 ? 'Matches' : (isConflict2 ? 'Conflicts' : 'Unverified')
         };
       }),
-      distinguishingQuestion: buildDistinguishingQuestion(anime1, anime2)
+      distinguishingQuestion: buildDistinguishingQuestion(eval1, eval2)
     };
 
     return res.status(200).json({
@@ -82,27 +98,18 @@ export default async function handler(req, res) {
   }
 }
 
-function checkTokens(phrase, text) {
-  const tokens = phrase.replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(t => t.length > 3);
-  if (tokens.length === 0) return false;
-  let matches = 0;
-  for (const t of tokens) {
-    if (text.includes(t)) matches++;
-  }
-  return matches >= Math.ceil(tokens.length * 0.6);
+function candFormatSnippet(clue, cand) {
+  if (clue.category === 'format') return cand.format || '';
+  if (clue.category === 'approx_year') return String(cand.year || '');
+  return '';
 }
 
 function buildDistinguishingQuestion(a1, a2) {
   if (a1.format !== a2.format) {
-    return `Did you watch a standalone ${a1.format} or a episodic ${a2.format}?`;
+    return `Was this a full multi-episode TV series (${a1.format === 'TV' ? a1.title : a2.title}) or an animated movie (${a1.format === 'Movie' ? a1.title : a2.title})?`;
   }
   if (a1.year && a2.year && Math.abs(a1.year - a2.year) > 4) {
     return `Was it released in ${a1.year} (${a1.title}) or in ${a2.year} (${a2.title})?`;
   }
-  const g1 = (a1.genres || [])[0] || 'Action';
-  const g2 = (a2.genres || [])[0] || 'Drama';
-  if (g1 !== g2) {
-    return `Was the primary focus on ${g1} elements or ${g2} elements?`;
-  }
-  return `Do you remember if the protagonist was associated with "${a1.characters?.[0]?.name || a1.title}" or "${a2.characters?.[0]?.name || a2.title}"?`;
+  return `Between "${a1.title}" and "${a2.title}", do you remember the main setting or distinct powers?`;
 }

@@ -116,7 +116,7 @@ Developed as a university software engineering project combining natural languag
 ### Installation
 ```bash
 # 1. Clone repository
-git clone https://github.com/[YOUR-USERNAME]/anirecall.git
+git clone https://github.com/mawu-stack/anirecall.git
 cd anirecall
 
 # 2. Install dependencies
@@ -126,7 +126,7 @@ npm install
 cp .env.example .env.local
 # Edit .env.local and add your GEMINI_API_KEY (optional)
 
-# 4. Run automated test suite
+# 4. Run automated test suite (48 assertions)
 npm test
 
 # 5. Start development server
@@ -156,7 +156,7 @@ Run the test suite with:
 ```bash
 npm test
 ```
-The automated test runner executes 12 comprehensive integration test suites (36 assertions total):
+The automated test runner executes 16 comprehensive integration test suites (48 assertions total):
 1. Recognizable plot description (Steins;Gate)
 2. Ambiguous description generating discriminating follow-up questions
 3. Uncertain (`maybe`) clue handling as soft preference (Bunny Girl Senpai)
@@ -169,6 +169,10 @@ The automated test runner executes 12 comprehensive integration test suites (36 
 10. Non-repeating follow-up question prevention across multi-turn sessions
 11. Full end-to-end multi-turn search & saved history interaction sequence
 12. In-memory caching & throttling resilience
+13. Grounding accuracy: elimination of false positives (Naruto strictly excludes Vinland Saga & Demon Slayer)
+14. Dedicated Exact Title search mode (Cowboy Bebop scored #1 without scene clue pollution)
+15. Clue persistence & refinement isolation (deleted clues are not resurrected from prompt)
+16. Namespaced catalog IDs (`anilist:` vs `mal:`) preventing cross-catalog collisions
 
 ---
 

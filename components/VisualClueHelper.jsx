@@ -122,12 +122,11 @@ export default function VisualClueHelper({ clues, onUpdateClues }) {
           return (
             <div
               key={idx}
-              onClick={() => handleToggleOption(opt)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0.55rem 0.75rem',
+                padding: '0.4rem 0.65rem',
                 borderRadius: 'var(--radius-md)',
                 background: isSelected
                   ? isSure
@@ -137,21 +136,29 @@ export default function VisualClueHelper({ clues, onUpdateClues }) {
                 border: isSelected
                   ? `1px solid ${isSure ? 'var(--success-border)' : 'var(--accent-violet)'}`
                   : '1px solid var(--border-subtle)',
-                cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
               className="card-interactive"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleToggleOption(opt);
-                }
-              }}
-              aria-pressed={isSelected}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+              <button
+                type="button"
+                onClick={() => handleToggleOption(opt)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  minWidth: 0,
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '0.15rem 0',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: 'inherit'
+                }}
+                aria-pressed={isSelected}
+                aria-label={`Toggle clue: ${opt.label}`}
+              >
                 <div
                   style={{
                     width: '26px',
@@ -179,7 +186,7 @@ export default function VisualClueHelper({ clues, onUpdateClues }) {
                 >
                   {opt.label}
                 </span>
-              </div>
+              </button>
 
               {isSelected && (
                 <button
@@ -198,6 +205,7 @@ export default function VisualClueHelper({ clues, onUpdateClues }) {
                     marginLeft: '0.4rem',
                     flexShrink: 0
                   }}
+                  aria-label={`Certainty: ${isSure ? 'Sure' : 'Maybe'}. Click to toggle.`}
                 >
                   {isSure ? 'Sure ✓' : 'Maybe ?'}
                 </button>

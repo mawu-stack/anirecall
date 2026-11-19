@@ -1,6 +1,6 @@
 // components/MysteryMode.jsx
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, ChevronRight, AlertTriangle, CheckCircle2, RotateCcw, Eye, Trophy } from 'lucide-react';
+import { HelpCircle, ChevronRight, AlertTriangle, CheckCircle2, RotateCcw, Eye, Trophy, ArrowRight } from 'lucide-react';
 
 export default function MysteryMode({ onSelectAnime }) {
   const [gameData, setGameData] = useState(null);
@@ -9,6 +9,8 @@ export default function MysteryMode({ onSelectAnime }) {
   const [userGuess, setUserGuess] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
   const [hasGivenUp, setHasGivenUp] = useState(false);
+  const [answerSummary, setAnswerSummary] = useState(null);
+  const [guessFeedback, setGuessFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
 
@@ -16,9 +18,11 @@ export default function MysteryMode({ onSelectAnime }) {
     setIsLoading(true);
     setIsCorrect(false);
     setHasGivenUp(false);
+    setAnswerSummary(null);
     setCurrentStageIndex(0);
     setRevealedSpoiler(false);
     setUserGuess('');
+    setGuessFeedback('');
 
     try {
       const res = await fetch('/api/mystery/game');
@@ -40,29 +44,59 @@ export default function MysteryMode({ onSelectAnime }) {
   const handleNextStage = () => {
     if (gameData && currentStageIndex < gameData.stages.length - 1) {
       setCurrentStageIndex(prev => prev + 1);
+      setGuessFeedback('');
     }
   };
 
-  const handleGuess = (e) => {
+  const handleGuess = async (e) => {
     e.preventDefault();
     if (!userGuess.trim() || !gameData) return;
 
-    const normalizedGuess = userGuess.trim().toLowerCase();
-    const titleMatch = gameData.answerSummary.title.toLowerCase().includes(normalizedGuess) ||
-                       (gameData.answerSummary.englishTitle && gameData.answerSummary.englishTitle.toLowerCase().includes(normalizedGuess));
+    setGuessFeedback('');
+    try {
+      const res = await fetch('/api/mystery/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId: gameData.gameId,
+          guess: userGuess.trim()
+        })
+      });
 
-    if (titleMatch) {
-      setIsCorrect(true);
-      // Award score based on stage: Stage 1 = 50 pts, Stage 2 = 40, Stage 3 = 30, Stage 4 = 20, Stage 5 = 10
-      const earned = Math.max(10, 50 - currentStageIndex * 10);
-      setScore(prev => prev + earned);
-    } else {
-      alert(`"${userGuess}" is not correct! Try revealing the next clue.`);
+      const json = await res.json();
+      if (json.success && json.correct) {
+        setIsCorrect(true);
+        setAnswerSummary(json.answerSummary);
+        const earned = Math.max(10, 50 - currentStageIndex * 10);
+        setScore(prev => prev + earned);
+      } else {
+        setGuessFeedback(json.message || `"${userGuess}" is not correct. Try revealing the next clue!`);
+      }
+    } catch (err) {
+      setGuessFeedback('Network error verifying guess.');
     }
   };
 
-  const handleGiveUp = () => {
-    setHasGivenUp(true);
+  const handleGiveUp = async () => {
+    if (!gameData) return;
+    try {
+      const res = await fetch('/api/mystery/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId: gameData.gameId,
+          giveUp: true
+        })
+      });
+
+      const json = await res.json();
+      if (json.success && json.answerSummary) {
+        setHasGivenUp(true);
+        setAnswerSummary(json.answerSummary);
+      }
+    } catch (err) {
+      console.error('Give up request failed:', err);
+    }
   };
 
   return (
@@ -121,28 +155,30 @@ export default function MysteryMode({ onSelectAnime }) {
                     <div
                       key={i}
                       style={{
-                        background: 'rgba(245, 158, 11, 0.1)',
-                        border: '1px solid rgba(245, 158, 11, 0.3)',
-                        padding: '0.75rem 1rem',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid var(--danger-border)',
                         borderRadius: 'var(--radius-md)',
+                        padding: '0.85rem 1rem',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <AlertTriangle size={16} color="var(--warning-text)" />
-                        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--warning-text)' }}>
-                          Stage 5: Major Plot Twist (Spoiler Shielded)
+                      <div>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--danger-text)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Stage {st.stage}: {st.label} ({st.difficulty})
                         </span>
+                        <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                          This clue contains a major story twist. Reveal only as a last resort!
+                        </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setRevealedSpoiler(true)}
                         className="btn btn-secondary"
-                        style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
+                        style={{ fontSize: '0.76rem', padding: '0.35rem 0.65rem' }}
                       >
-                        <Eye size={12} />
+                        <Eye size={13} />
                         Reveal Spoiler Clue
                       </button>
                     </div>
@@ -160,15 +196,15 @@ export default function MysteryMode({ onSelectAnime }) {
                       padding: '0.85rem 1rem'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--accent-cyan)', textTransform: 'uppercase' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--accent-violet-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         Stage {st.stage}: {st.label}
                       </span>
-                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                         Difficulty: {st.difficulty}
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                    <p style={{ fontSize: '0.92rem', color: 'var(--text-primary)', lineHeight: 1.45 }}>
                       {st.clue}
                     </p>
                   </div>
@@ -200,6 +236,24 @@ export default function MysteryMode({ onSelectAnime }) {
               </form>
             )}
 
+            {/* Inline feedback message (Accessible, no blocking alert) */}
+            {guessFeedback && (
+              <div
+                className="fade-in"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid var(--danger-border)',
+                  color: 'var(--danger-text)',
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.84rem',
+                  marginBottom: '1rem'
+                }}
+              >
+                {guessFeedback}
+              </div>
+            )}
+
             {/* Stage controls & Give Up */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {!isCorrect && !hasGivenUp && currentStageIndex < gameData.stages.length - 1 && (
@@ -227,7 +281,7 @@ export default function MysteryMode({ onSelectAnime }) {
             </div>
 
             {/* Victory / Reveal Card */}
-            {(isCorrect || hasGivenUp) && (
+            {(isCorrect || hasGivenUp) && answerSummary && (
               <div
                 className="panel fade-in"
                 style={{
@@ -256,42 +310,49 @@ export default function MysteryMode({ onSelectAnime }) {
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
                   <img
-                    src={gameData.answerSummary.posterUrl}
-                    alt={gameData.answerSummary.title}
-                    style={{ width: '90px', height: '130px', objectFit: 'cover', borderRadius: '4px' }}
+                    src={answerSummary.posterUrl}
+                    alt={answerSummary.title}
+                    style={{
+                      width: '110px',
+                      height: '155px',
+                      objectFit: 'cover',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)'
+                    }}
                   />
                   <div style={{ flex: 1, minWidth: '220px' }}>
-                    <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                      {gameData.answerSummary.title}
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.2rem' }}>
+                      {answerSummary.title}
                     </h4>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.45rem' }}>
-                      {gameData.answerSummary.year} • {gameData.answerSummary.englishTitle}
+                    {answerSummary.englishTitle && (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--accent-violet-light)', marginBottom: '0.4rem' }}>
+                        {answerSummary.englishTitle}
+                      </p>
+                    )}
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: '0.85rem' }}>
+                      {answerSummary.synopsis}
                     </p>
-                    <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      {gameData.answerSummary.synopsis}
-                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectAnime(answerSummary.title)}
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}
+                      >
+                        Inspect in AniRecall Agent
+                        <ArrowRight size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={fetchNewGame}
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}
+                      >
+                        <RotateCcw size={13} />
+                        Play Next Challenge
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={fetchNewGame}
-                    className="btn btn-primary"
-                    style={{ fontSize: '0.84rem' }}
-                  >
-                    <RotateCcw size={14} />
-                    Play Another Round
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onSelectAnime(gameData.answerSummary.title)}
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.84rem' }}
-                  >
-                    Search Clues For This Anime
-                  </button>
                 </div>
               </div>
             )}

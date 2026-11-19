@@ -148,17 +148,37 @@ export default function CharacterFinder({ onSelectAnimeFromCharacter }) {
             <div key={idx} className="panel fade-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                  <img
-                    src={char.posterUrl || char.image || 'https://via.placeholder.com/100x140?text=Character'}
-                    alt={char.name}
-                    style={{
-                      width: '65px',
-                      height: '90px',
-                      objectFit: 'cover',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-main)'
-                    }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={char.image || char.posterUrl || 'https://via.placeholder.com/100x140?text=Character'}
+                      alt={`Portrait of ${char.name}`}
+                      style={{
+                        width: '70px',
+                        height: '95px',
+                        objectFit: 'cover',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--border-subtle)'
+                      }}
+                      loading="lazy"
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        left: '2px',
+                        right: '2px',
+                        background: 'rgba(11, 15, 25, 0.85)',
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        color: 'var(--text-muted)',
+                        borderRadius: '2px'
+                      }}
+                    >
+                      {char.image ? 'Portrait' : 'Series Art'}
+                    </span>
+                  </div>
                   <div>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                       {char.name}
@@ -174,13 +194,23 @@ export default function CharacterFinder({ onSelectAnimeFromCharacter }) {
                   </div>
                 </div>
 
-                <div style={{ background: 'var(--bg-input)', padding: '0.45rem 0.65rem', borderRadius: 'var(--radius-sm)', marginBottom: '0.75rem' }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.2rem' }}>
-                    Linked Anime:
-                  </p>
-                  <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--accent-cyan)' }}>
-                    {char.animeTitle}
-                  </p>
+                <div style={{ background: 'var(--bg-input)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '0.15rem' }}>
+                      Linked Anime Series:
+                    </p>
+                    <p style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                      {char.animeTitle}
+                    </p>
+                  </div>
+                  {char.posterUrl && char.image && (
+                    <img
+                      src={char.posterUrl}
+                      alt={`Poster of ${char.animeTitle}`}
+                      title={`Official series poster for ${char.animeTitle}`}
+                      style={{ width: '28px', height: '40px', objectFit: 'cover', borderRadius: '3px', border: '1px solid var(--border-subtle)' }}
+                    />
+                  )}
                 </div>
 
                 {char.traits && char.traits.length > 0 && (

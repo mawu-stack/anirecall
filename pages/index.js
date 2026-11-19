@@ -1,5 +1,5 @@
 // pages/index.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import ClueManager from '../components/ClueManager';
@@ -14,6 +14,7 @@ import SimilarVibes from '../components/SimilarVibes';
 import VisualExamples from '../components/VisualExamples';
 import VisualClueHelper from '../components/VisualClueHelper';
 import CelebrationModal from '../components/CelebrationModal';
+import RefineModal from '../components/RefineModal';
 import Footer from '../components/Footer';
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
   const [followUpQuestion, setFollowUpQuestion] = useState(null);
   const [reasoningSummary, setReasoningSummary] = useState('');
   const [isDemoMode, setIsDemoMode] = useState(true);
+  const [providerStatus, setProviderStatus] = useState('missing_credentials');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -35,8 +37,12 @@ export default function Home() {
   const [comparisonData, setComparisonData] = useState(null);
   const [confirmedAnime, setConfirmedAnime] = useState(null);
   const [celebrationAnime, setCelebrationAnime] = useState(null);
+  const [refiningCandidate, setRefiningCandidate] = useState(null);
   const [showSimilarVibes, setShowSimilarVibes] = useState(false);
   const [historyItems, setHistoryItems] = useState([]);
+
+  // Race condition protection: ignore stale async responses
+  const activeRequestIdRef = useRef(0);
 
   // Load saved history from localStorage on mount
   useEffect(() => {
@@ -60,7 +66,7 @@ export default function Home() {
       timestamp: Date.now()
     };
 
-    const updated = [newItem, ...historyItems.filter(h => h.anime.id !== anime.id)];
+    const updated = [newItem, ...historyItems.filter(h => (h.anime.uid || h.anime.id) !== (anime.uid || anime.id))];
     setHistoryItems(updated);
     try {
       localStorage.setItem('anirecall_history', JSON.stringify(updated));
@@ -96,25 +102,75 @@ export default function Home() {
     setAnsweredCategories([]);
     setPreviousQuestions([]);
     setCurrentMode('story');
-    // Trigger agent search with reopened clues
     executeSearch({
       customQuery: historyItem.originalQuery || '',
-      customClues: historyItem.cluesSnapshot || []
+      customClues: historyItem.cluesSnapshot || [],
+      customExcluded: [],
+      isRefinement: true
     });
   };
 
-  // Main agent search execution
+  /**
+   * Explicit New Search: resets all prior clues, exclusions, follow-up history, and stale summaries.
+   */
+  const handleNewSearch = (newQuery = '', overrideMode = null) => {
+    const q = typeof newQuery === 'string' ? newQuery : '';
+    setQuery(q);
+    if (overrideMode) {
+      setSearchMode(overrideMode);
+    }
+    setClues([]);
+    setCandidates([]);
+    setExcludedIds([]);
+    setAnsweredCategories([]);
+    setPreviousQuestions([]);
+    setFollowUpQuestion(null);
+    setComparisonData(null);
+    setReasoningSummary('');
+    setErrorMessage('');
+
+    if (q.trim()) {
+      executeSearch({
+        customQuery: q,
+        customClues: [],
+        customExcluded: [],
+        customMode: overrideMode || searchMode,
+        isNewSearch: true
+      });
+    }
+  };
+
+  /**
+   * Mode switch handler: starts a clean new search when switching between Story and Title modes
+   */
+  const handleChangeSearchMode = (newMode) => {
+    setSearchMode(newMode);
+    if (clues.length > 0 || candidates.length > 0) {
+      handleNewSearch(query, newMode);
+    }
+  };
+
+  /**
+   * Main agent search execution with race condition protection.
+   */
   const executeSearch = async ({
     customQuery = null,
     customClues = null,
     customExcluded = null,
-    followUpAnswer = null
+    customMode = null,
+    followUpAnswer = null,
+    isRefinement = false,
+    isNewSearch = false
   } = {}) => {
     const q = customQuery !== null ? customQuery : query;
     const activeClues = customClues !== null ? customClues : clues;
     const activeExcluded = customExcluded !== null ? customExcluded : excludedIds;
+    const activeMode = customMode !== null ? customMode : searchMode;
 
     if (!q.trim() && activeClues.length === 0) return;
+
+    // Increment request ID to invalidate any prior in-flight requests
+    const currentReqId = ++activeRequestIdRef.current;
 
     setIsLoading(true);
     setErrorMessage('');
@@ -125,38 +181,52 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: q,
-          existingClues: activeClues,
-          excludedIds: activeExcluded,
+          existingClues: isNewSearch ? [] : activeClues,
+          excludedIds: isNewSearch ? [] : activeExcluded,
           followUpAnswer,
-          mode: searchMode,
-          answeredCategories,
-          previousQuestions
+          mode: activeMode,
+          answeredCategories: isNewSearch ? [] : answeredCategories,
+          previousQuestions: isNewSearch ? [] : previousQuestions,
+          isRefinement: isRefinement && !isNewSearch
         })
       });
 
       const json = await res.json();
+
+      // Guard: Ignore response if a newer search began while this request was in flight
+      if (currentReqId !== activeRequestIdRef.current) {
+        return;
+      }
+
       if (json.success && json.data) {
         setClues(json.data.clues || []);
         setCandidates(json.data.candidates || []);
         setFollowUpQuestion(json.data.followUpQuestion || null);
         setReasoningSummary(json.data.reasoningSummary || '');
         setIsDemoMode(Boolean(json.data.isDemoMode));
+        if (json.data.providerStatus) {
+          setProviderStatus(json.data.providerStatus);
+        }
         if (json.data.answeredCategories) setAnsweredCategories(json.data.answeredCategories);
         if (json.data.previousQuestions) setPreviousQuestions(json.data.previousQuestions);
       } else {
         setErrorMessage(json.error || 'Failed to process memory clues.');
       }
     } catch (err) {
-      console.error('Search request failed:', err);
-      setErrorMessage(err.message || 'Network error communicating with the AniRecall agent.');
+      if (currentReqId === activeRequestIdRef.current) {
+        console.error('Search request failed:', err);
+        setErrorMessage(err.message || 'Network error communicating with the AniRecall agent.');
+      }
     } finally {
-      setIsLoading(false);
+      if (currentReqId === activeRequestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   // Follow-up question answer
   const handleAnswerQuestion = (answerData) => {
-    executeSearch({ followUpAnswer: answerData });
+    executeSearch({ followUpAnswer: answerData, isRefinement: true });
   };
 
   // Follow-up question skip
@@ -173,28 +243,22 @@ export default function Home() {
 
   // Exclude candidate ("That's not it")
   const handleExcludeCandidate = (candidate) => {
-    const updatedExcluded = [...excludedIds, candidate.id];
+    const candidateId = candidate.uid || candidate.id;
+    const updatedExcluded = [...excludedIds, candidateId];
     setExcludedIds(updatedExcluded);
     // Re-filter immediately excluding this candidate
-    executeSearch({ customExcluded: updatedExcluded });
+    executeSearch({ customExcluded: updatedExcluded, isRefinement: true });
   };
 
-  // Refine candidate ("Close, but...")
-  const handleRefineCandidate = (candidate) => {
-    const correction = prompt(
-      `What makes "${candidate.title}" close, and what is different? (e.g. "Wrong weapon, mine had a chainsaw", "Mine was a 2016 film, not a series")`
-    );
-    if (correction && correction.trim()) {
-      const newClue = {
-        id: `clue-${Date.now()}`,
-        category: 'scene',
-        text: correction.trim(),
-        confidence: 'sure'
-      };
-      const updatedClues = [...clues, newClue];
-      setClues(updatedClues);
-      executeSearch({ customClues: updatedClues });
-    }
+  // Refine candidate ("Close, but...") opens accessible inline RefineModal
+  const handleOpenRefineModal = (candidate) => {
+    setRefiningCandidate(candidate);
+  };
+
+  const handleApplyRefinement = (newClue) => {
+    const updatedClues = [...clues, newClue];
+    setClues(updatedClues);
+    executeSearch({ customClues: updatedClues, isRefinement: true });
   };
 
   // Compare 2 candidates side-by-side
@@ -204,8 +268,8 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id1: cand1.id,
-          id2: cand2.id,
+          id1: cand1.uid || cand1.id,
+          id2: cand2.uid || cand2.id,
           clues
         })
       });
@@ -218,6 +282,8 @@ export default function Home() {
     }
   };
 
+  const hasActiveSearch = clues.length > 0 || candidates.length > 0 || excludedIds.length > 0;
+
   return (
     <div className="app-container">
       {/* Header & Global Mode Navigation */}
@@ -225,6 +291,7 @@ export default function Home() {
         currentMode={currentMode}
         onSelectMode={(mode) => setCurrentMode(mode)}
         isDemoMode={isDemoMode}
+        providerStatus={providerStatus}
       />
 
       {/* Error state alert */}
@@ -262,10 +329,12 @@ export default function Home() {
           <SearchBar
             query={query}
             onChangeQuery={(val) => setQuery(val)}
-            onSearch={() => executeSearch()}
+            onSearch={() => executeSearch({ isNewSearch: clues.length === 0 })}
+            onNewSearch={handleNewSearch}
+            hasActiveSearch={hasActiveSearch}
             isLoading={isLoading}
             searchMode={searchMode}
-            onChangeSearchMode={(m) => setSearchMode(m)}
+            onChangeSearchMode={handleChangeSearchMode}
           />
 
           {/* Visual Clue Selector Helper ("Help Me Remember") */}
@@ -273,7 +342,7 @@ export default function Home() {
             clues={clues}
             onUpdateClues={(newClues) => {
               setClues(newClues);
-              executeSearch({ customClues: newClues });
+              executeSearch({ customClues: newClues, isRefinement: true });
             }}
           />
 
@@ -281,8 +350,7 @@ export default function Home() {
           {candidates.length === 0 && !isLoading && (
             <VisualExamples
               onSelectExample={(exampleText) => {
-                setQuery(exampleText);
-                executeSearch({ customQuery: exampleText });
+                handleNewSearch(exampleText);
               }}
             />
           )}
@@ -295,9 +363,9 @@ export default function Home() {
                 clues={clues}
                 onUpdateClues={(newClues) => {
                   setClues(newClues);
-                  executeSearch({ customClues: newClues });
+                  executeSearch({ customClues: newClues, isRefinement: true });
                 }}
-                onRefreshSearch={() => executeSearch()}
+                onRefreshSearch={() => executeSearch({ isRefinement: true })}
                 isLoading={isLoading}
               />
 
@@ -328,7 +396,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       setExcludedIds([]);
-                      executeSearch({ customExcluded: [] });
+                      executeSearch({ customExcluded: [], isRefinement: true });
                     }}
                     className="btn btn-ghost"
                     style={{ fontSize: '0.76rem', padding: '0.2rem 0.5rem' }}
@@ -345,7 +413,7 @@ export default function Home() {
                 candidates={candidates}
                 onConfirmCandidate={handleConfirmCandidate}
                 onExcludeCandidate={handleExcludeCandidate}
-                onRefineCandidate={handleRefineCandidate}
+                onRefineCandidate={handleOpenRefineModal}
                 onCompareCandidates={handleCompareCandidates}
                 reasoningSummary={reasoningSummary}
                 isLoading={isLoading}
@@ -359,9 +427,8 @@ export default function Home() {
       {currentMode === 'character' && (
         <CharacterFinder
           onSelectAnimeFromCharacter={(title) => {
-            setQuery(`Character from ${title}`);
             setCurrentMode('story');
-            executeSearch({ customQuery: `Character from ${title}` });
+            handleNewSearch(title, 'title');
           }}
         />
       )}
@@ -370,9 +437,8 @@ export default function Home() {
       {currentMode === 'screenshot' && (
         <ScreenshotSearch
           onSelectAnime={(title) => {
-            setQuery(title);
             setCurrentMode('story');
-            executeSearch({ customQuery: title });
+            handleNewSearch(title, 'title');
           }}
         />
       )}
@@ -381,9 +447,8 @@ export default function Home() {
       {currentMode === 'mystery' && (
         <MysteryMode
           onSelectAnime={(title) => {
-            setQuery(title);
             setCurrentMode('story');
-            executeSearch({ customQuery: title });
+            handleNewSearch(title, 'title');
           }}
         />
       )}
@@ -399,6 +464,14 @@ export default function Home() {
       )}
 
       {/* Modals */}
+      {refiningCandidate && (
+        <RefineModal
+          candidate={refiningCandidate}
+          onClose={() => setRefiningCandidate(null)}
+          onAddRefinement={handleApplyRefinement}
+        />
+      )}
+
       {celebrationAnime && (
         <CelebrationModal
           anime={celebrationAnime}
@@ -423,8 +496,7 @@ export default function Home() {
           confirmedAnime={confirmedAnime}
           onClose={() => setShowSimilarVibes(false)}
           onSelectRecommended={(title) => {
-            setQuery(title);
-            executeSearch({ customQuery: title });
+            handleNewSearch(title, 'title');
           }}
         />
       )}

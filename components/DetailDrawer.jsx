@@ -469,7 +469,11 @@ export default function DetailDrawer({
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                 <strong>Documented streaming licenses:</strong> {anime.platforms.join(', ')}
               </div>
-            ) : null}
+            ) : (
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                <em>Streaming availability not verified for this entry.</em>
+              </div>
+            )}
 
             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.4 }}>
               <Info size={11} style={{ display: 'inline', marginRight: '3px' }} />

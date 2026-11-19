@@ -289,6 +289,83 @@ async function runAllTests() {
     assert(false, `Test 12 failed with error: ${err.message}`);
   }
 
+  console.log('\n-----------------------------------------------------');
+
+  // Test 13: Grounding Verification — Naruto Query Excludes Vinland Saga & Demon Slayer
+  console.log('Test 13: Grounding Accuracy — Atomic Clue Matching & Elimination of False Positives');
+  try {
+    const narutoRes = await runRecallAgent({
+      query: "A boy wants to become the leader of his ninja village and has a fox spirit sealed inside him."
+    });
+    const hasVinland = narutoRes.candidates.some(c => c.title.toLowerCase().includes('vinland'));
+    const hasDemonSlayer = narutoRes.candidates.some(c => c.title.toLowerCase().includes('demon slayer') || c.title.toLowerCase().includes('kimetsu'));
+    assert(!hasVinland, 'Vinland Saga is NOT marked as matching the Naruto description');
+    assert(!hasDemonSlayer, 'Demon Slayer is NOT marked as matching the Naruto description');
+    if (narutoRes.candidates.length > 0) {
+      assert(narutoRes.candidates[0].title.toLowerCase().includes('naruto'), `Top candidate correctly identified as Naruto (Got: ${narutoRes.candidates[0].title})`);
+    }
+  } catch (err) {
+    assert(false, `Test 13 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 14: Exact Title Search Mode (Cowboy Bebop)
+  console.log('Test 14: Dedicated Exact Title Search Mode');
+  try {
+    const titleRes = await runRecallAgent({
+      query: "Cowboy Bebop",
+      mode: 'title'
+    });
+    assert(titleRes.candidates.length > 0, 'Found anime via exact title search');
+    assert(titleRes.candidates[0].title === 'Cowboy Bebop', `Top result is Cowboy Bebop (Got: ${titleRes.candidates[0]?.title})`);
+    assert(titleRes.candidates[0].score >= 50, `Exact title received high match boost (Score: ${titleRes.candidates[0]?.score})`);
+    assert(!titleRes.clues.some(c => c.category === 'scene'), 'Did not treat title as scene clues in title mode');
+  } catch (err) {
+    assert(false, `Test 14 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 15: Clue Persistence & Refinement Isolation
+  console.log('Test 15: Clue Persistence — Does Not Resurrect Deleted Clues on Refinement');
+  try {
+    // Initial extraction
+    const initial = await runRecallAgent({
+      query: "Mad scientist in Akihabara with white lab coat microwave time machine"
+    });
+    assert(initial.clues.length >= 2, `Extracted ${initial.clues.length} clues initially`);
+
+    // User removes one clue and refines
+    const curatedClues = initial.clues.slice(0, 1);
+    const removedClueText = initial.clues[1]?.text;
+
+    const refined = await runRecallAgent({
+      query: "Mad scientist in Akihabara with white lab coat microwave time machine",
+      existingClues: curatedClues,
+      isRefinement: true
+    });
+
+    assert(refined.clues.length === 1, `Refinement preserved curated clue set count (${refined.clues.length})`);
+    assert(!refined.clues.some(c => c.text === removedClueText), `Deleted clue "${removedClueText}" was not resurrected`);
+  } catch (err) {
+    assert(false, `Test 15 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 16: Namespaced Catalog IDs
+  console.log('Test 16: Namespaced Catalog IDs & Collision Prevention');
+  try {
+    const catalogRes = await searchAnime('Steins;Gate');
+    assert(catalogRes.length > 0, 'Retrieved catalog entries');
+    const firstCand = catalogRes[0];
+    assert(Boolean(firstCand.uid), `Candidate has namespaced uid: "${firstCand.uid}"`);
+    assert(firstCand.uid.startsWith('mal:') || firstCand.uid.startsWith('anilist:'), `UID uses proper namespace prefix (${firstCand.uid})`);
+  } catch (err) {
+    assert(false, `Test 16 failed with error: ${err.message}`);
+  }
+
   console.log('\n=====================================================');
   console.log(`TOTAL TESTS: ${passedCount + failedCount} | PASSED: ${passedCount} | FAILED: ${failedCount}`);
   console.log('=====================================================\n');
