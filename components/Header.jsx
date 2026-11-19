@@ -1,14 +1,31 @@
 // components/Header.jsx
-import React from 'react';
-import { Search, User, HelpCircle, Image as ImageIcon, BookmarkCheck, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, User, HelpCircle, Image as ImageIcon, BookmarkCheck, Sparkles, Cpu, ChevronDown, ChevronUp, CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function Header({ currentMode, onSelectMode, isDemoMode, providerStatus = 'missing_credentials' }) {
+export default function Header({
+  currentMode,
+  onSelectMode,
+  isDemoMode,
+  providerStatus = 'missing_credentials',
+  geminiDiagnostics = null
+}) {
+  const [showDiagModal, setShowDiagModal] = useState(false);
+
   const renderStatusBadge = () => {
     if (providerStatus === 'ai_success') {
+      const activeModel = geminiDiagnostics?.activeModel || 'gemini-2.5-flash';
       return (
-        <span className="badge badge-strong" title="Google Gemini active for semantic extraction">
-          Live AI Agent Active (Google Gemini + AniList GraphQL)
-        </span>
+        <button
+          type="button"
+          onClick={() => setShowDiagModal(!showDiagModal)}
+          className="badge badge-strong"
+          style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+          title="Click to view Gemini agent diagnostic details"
+        >
+          <Cpu size={12} />
+          Live AI Agent Active ({activeModel})
+          {showDiagModal ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
       );
     }
     if (providerStatus === 'exact_title_lookup') {
@@ -27,9 +44,16 @@ export default function Header({ currentMode, onSelectMode, isDemoMode, provider
     }
     if (providerStatus === 'extraction_failed') {
       return (
-        <span className="badge badge-warning" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} title="AI extraction returned unparseable output. Seamlessly fallen back to deterministic catalog rules.">
+        <button
+          type="button"
+          onClick={() => setShowDiagModal(!showDiagModal)}
+          className="badge badge-warning"
+          style={{ cursor: 'pointer', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+          title="Click to view diagnostic details"
+        >
+          <AlertCircle size={12} />
           AI Extraction Fallback (Deterministic Catalog Mode)
-        </span>
+        </button>
       );
     }
     if (providerStatus === 'rate_limited') {
@@ -41,9 +65,16 @@ export default function Header({ currentMode, onSelectMode, isDemoMode, provider
     }
     if (providerStatus === 'fallback_fixture') {
       return (
-        <span className="badge badge-demo" title="Deterministic NLP extraction grounded in catalog records">
+        <button
+          type="button"
+          onClick={() => setShowDiagModal(!showDiagModal)}
+          className="badge badge-demo"
+          style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+          title="Click to view system status"
+        >
+          <Cpu size={12} />
           Curated Ground-Truth Catalog Mode (Deterministic NLP Grounding)
-        </span>
+        </button>
       );
     }
     return (
@@ -101,13 +132,70 @@ export default function Header({ currentMode, onSelectMode, isDemoMode, provider
       </p>
 
       {/* Status Badges & Attribution */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
         {renderStatusBadge()}
 
         <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', background: 'var(--bg-input)', padding: '0.2rem 0.55rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)' }}>
           Catalog Artwork & Records via AniList & MyAnimeList
         </span>
       </div>
+
+      {/* Expandable Diagnostic Pill / Banner */}
+      {showDiagModal && (
+        <div
+          className="fade-in"
+          style={{
+            maxWidth: '480px',
+            margin: '0 auto 1.25rem',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '0.85rem 1rem',
+            textAlign: 'left',
+            fontSize: '0.8rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.35rem' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Cpu size={14} color="var(--accent-cyan)" />
+              Agent Diagnostic Status
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowDiagModal(false)}
+              className="btn btn-ghost"
+              style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem' }}
+            >
+              Close
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '0.25rem 0.5rem', color: 'var(--text-secondary)' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Provider Key:</span>
+            <span style={{ color: geminiDiagnostics?.hasKey ? 'var(--success-text)' : 'var(--warning-text)', fontWeight: 600 }}>
+              {geminiDiagnostics?.hasKey ? 'Configured (Server-Side)' : 'Not configured'}
+            </span>
+
+            <span style={{ color: 'var(--text-muted)' }}>Active Model:</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+              {geminiDiagnostics?.activeModel || 'gemini-2.5-flash'}
+            </span>
+
+            {geminiDiagnostics?.configuredModel && (
+              <>
+                <span style={{ color: 'var(--text-muted)' }}>Configured Model:</span>
+                <span>{geminiDiagnostics.configuredModel}</span>
+              </>
+            )}
+
+            <span style={{ color: 'var(--text-muted)' }}>Diagnostic Code:</span>
+            <span>{geminiDiagnostics?.errorCode || 'NONE'}</span>
+
+            <span style={{ color: 'var(--text-muted)' }}>Provider Status:</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.76rem' }}>{providerStatus}</span>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Mode Tabs */}
       <nav className="nav-tabs" aria-label="Search Modes">

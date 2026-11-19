@@ -1,15 +1,24 @@
 // components/VisualExamples.jsx
-import React from 'react';
-import { Sparkles, ArrowRight, PlayCircle, Eye } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const VISUAL_EXAMPLES = [
+  {
+    id: 'odd-taxi-memory',
+    teaser: "Walrus Taxi Driver & The Missing Girl",
+    category: "Mystery • Suspense",
+    image: "https://cdn.myanimelist.net/images/anime/1160/115509.jpg",
+    accent: "#F59E0B",
+    text: "A walrus taxi driver gets caught up in a missing girl mystery in a city populated by animals.",
+    clueHighlights: ["Walrus taxi driver", "City populated by animals", "Missing girl mystery", "Suspense"]
+  },
   {
     id: 'steins-gate-memory',
     teaser: "The Microwave That Sends Text Messages to the Past",
     category: "Sci-Fi • Time Leap",
     image: "https://cdn.myanimelist.net/images/anime/1935/127974.jpg",
     accent: "#06B6D4",
-    text: "A self-proclaimed mad scientist in Akihabara in a white lab coat hooks a cell phone to a microwave to turn green bananas into gel, accidentally discovering time travel.",
+    text: "An eccentric researcher in Akihabara in a white lab coat hooks a phone to a microwave, accidentally discovering text messages sent into the past.",
     clueHighlights: ["Mad scientist", "Lab coat", "Phone microwave", "Gel bananas", "D-mails to past"]
   },
   {
@@ -18,17 +27,8 @@ export const VISUAL_EXAMPLES = [
     category: "Psychological • Suspense",
     image: "https://cdn.myanimelist.net/images/anime/9/9453.jpg",
     accent: "#8B5CF6",
-    text: "A top high school student finds a notebook dropped by a death god, writing criminals' names while eating potato chips with a mini TV hidden inside to evade a crouching detective.",
+    text: "A top high school student finds a supernatural notebook dropped by a death god and wages a tactical cat-and-mouse game against an eccentric detective.",
     clueHighlights: ["Death god", "Black notebook", "Eating potato chips", "Crouching detective", "Tennis match"]
-  },
-  {
-    id: 'madoka-memory',
-    teaser: "Muskets and the Episode 3 Candy Witch",
-    category: "Dark Fantasy • Deconstruction",
-    image: "https://cdn.myanimelist.net/images/anime/11/55225.jpg",
-    accent: "#F43F5E",
-    text: "A dark magical girl story where a veteran blonde mentor who summons flintlock muskets suffers a shocking decapitation by a dessert clown witch in episode 3.",
-    clueHighlights: ["Magical girl", "Blonde mentor", "Flintlock muskets", "Dessert clown witch", "Soul gem"]
   },
   {
     id: 'spirited-away-memory',
@@ -36,17 +36,8 @@ export const VISUAL_EXAMPLES = [
     category: "Supernatural • Classic Film",
     image: "https://cdn.myanimelist.net/images/anime/40/644.jpg",
     accent: "#10B981",
-    text: "A young girl's parents greedily gorge at unattended food stalls in an abandoned carnival, turning into giant pigs, forcing her to work at a bathhouse for Japanese spirits.",
+    text: "A young girl's parents wander into an abandoned carnival and transform, forcing her to work at a magical bathhouse for spirits.",
     clueHighlights: ["Parents turn into pigs", "Spirit bathhouse", "Abandoned carnival", "No-Face", "Dragon river spirit"]
-  },
-  {
-    id: 'tokyo-ghoul-memory',
-    teaser: "Counting Down from 1000 by 7",
-    category: "Dark Supernatural • Action",
-    image: "https://cdn.myanimelist.net/images/anime/5/64449.jpg",
-    accent: "#EC4899",
-    text: "A college boy receives ghoul organ transplants, wears a one-eyed leather mask, and his hair turns snow-white while counting backwards from 1000 by 7 during intense torture.",
-    clueHighlights: ["Eyepatch mask", "Hair turns white", "1000 minus 7", "Centipede torture", "Ghoul organs"]
   },
   {
     id: 'your-name-memory',
@@ -54,27 +45,39 @@ export const VISUAL_EXAMPLES = [
     category: "Romance • Celestial Mystery",
     image: "https://cdn.myanimelist.net/images/anime/1915/129707.jpg",
     accent: "#38BDF8",
-    text: "A high school boy in Tokyo and a rural shrine maiden mysteriously swap bodies, writing notes on their faces and palms before discovering a split comet threatens her mountain hometown.",
+    text: "Two teenagers separated by distance begin waking up in each other's bodies, leaving clues on their hands and phones before a comet approaches.",
     clueHighlights: ["Body swap", "Tokyo boy", "Shrine maiden", "Writing on palm", "Splitting comet"]
   },
   {
     id: 'bunny-girl-memory',
-    teaser: "Playboy Bunny Wandering a Public Library",
-    category: "Psychological Mystery • Supernatural",
+    teaser: "Bunny Girl Wandering a Public Library",
+    category: "Psychological • Supernatural",
     image: "https://cdn.myanimelist.net/images/anime/1301/93586.jpg",
     accent: "#A78BFA",
-    text: "A high school boy sees a famous teenage actress walking around a quiet public library wearing a bunny girl suit, but nobody else can see or remember her existence.",
+    text: "A high school student encounters a famous teenage actress walking around a quiet library unnoticed in a bunny girl suit.",
     clueHighlights: ["Bunny suit", "Quiet library", "Invisible celebrity", "Puberty syndrome", "Adolescence"]
+  },
+  {
+    id: 'madoka-memory',
+    teaser: "A Darker Take on Magical Girl Contracts",
+    category: "Dark Fantasy • Mystery",
+    image: "https://cdn.myanimelist.net/images/anime/11/55225.jpg",
+    accent: "#F43F5E",
+    text: "A magical girl series where a contract with a small cat-like creature leads to unexpected psychological drama and surreal witch labyrinths.",
+    clueHighlights: ["Magical girl", "Blonde mentor", "Flintlock muskets", "Witch labyrinth", "Soul gem"]
   }
 ];
 
 export default function VisualExamples({ onSelectExample }) {
+  const [expanded, setExpanded] = useState(false);
+  const displayedExamples = expanded ? VISUAL_EXAMPLES : VISUAL_EXAMPLES.slice(0, 3);
+
   return (
     <section style={{ marginBottom: '1.75rem' }} aria-label="Visual Memory Search Examples">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Sparkles size={16} color="var(--accent-cyan)" />
-          <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
             Try an Image-Backed Memory
           </h2>
         </div>
@@ -90,7 +93,7 @@ export default function VisualExamples({ onSelectExample }) {
           gap: '0.9rem'
         }}
       >
-        {VISUAL_EXAMPLES.map((ex) => (
+        {displayedExamples.map((ex) => (
           <button
             key={ex.id}
             type="button"
@@ -124,6 +127,9 @@ export default function VisualExamples({ onSelectExample }) {
                   filter: 'brightness(0.75)'
                 }}
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/260x110?text=Anime+Scene';
+                }}
               />
               <div
                 style={{
@@ -147,8 +153,9 @@ export default function VisualExamples({ onSelectExample }) {
                   borderRadius: 'var(--radius-full)',
                   border: `1px solid ${ex.accent}`
                 }}
-                dangerouslySetInnerHTML={{ __html: ex.category }}
-              />
+              >
+                {ex.category}
+              </span>
             </div>
 
             {/* Content body */}
@@ -216,6 +223,28 @@ export default function VisualExamples({ onSelectExample }) {
             </div>
           </button>
         ))}
+      </div>
+
+      {/* Expand / Collapse Control */}
+      <div style={{ textAlign: 'center', marginTop: '0.85rem' }}>
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="btn btn-secondary"
+          style={{ fontSize: '0.82rem', padding: '0.35rem 0.95rem' }}
+        >
+          {expanded ? (
+            <>
+              <ChevronUp size={14} />
+              Show fewer examples
+            </>
+          ) : (
+            <>
+              <ChevronDown size={14} />
+              Show more memory examples ({VISUAL_EXAMPLES.length - 3} more)
+            </>
+          )}
+        </button>
       </div>
     </section>
   );

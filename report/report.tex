@@ -53,7 +53,7 @@
     \textbf{University Software Engineering Project}
 }
 
-\date{\textbf{Academic Term:} Fall 2026 / Verified Build: November 18, 2026}
+\date{\textbf{Academic Term:} Fall 2026 / Verified Build: November 19, 2026}
 
 \begin{document}
 
@@ -184,7 +184,7 @@ Confirmed anime titles are preserved with the user's original query text in brow
 \section{Empirical Evaluation and Test Results}
 \label{sec:evaluation}
 
-The system was evaluated through an automated verification suite (\texttt{scripts/run-tests.js}) comprising 16 integration benchmarks (48 total assertions) representing real-world query modalities.
+The system was evaluated through an automated verification suite (\texttt{scripts/run-unit-tests.js}) comprising 21 integration benchmarks (74 total assertions) representing real-world query modalities.
 
 \begin{table}[htbp]
 \centering
@@ -211,8 +211,13 @@ The system was evaluated through an automated verification suite (\texttt{script
 \textbf{Suite 14} & Exact Title Search & 4 / 4 & \textbf{PASS} & Direct title lookup for \textit{Cowboy Bebop} scores \#1 (score 65) without scene clue pollution. \\
 \textbf{Suite 15} & Refinement Isolation & 3 / 3 & \textbf{PASS} & Curated clue deletion is preserved on refinement; deleted clues are not resurrected from prompt. \\
 \textbf{Suite 16} & Namespaced IDs & 3 / 3 & \textbf{PASS} & Dual catalog namespaces (\texttt{anilist:} and \texttt{mal:}) eliminate cross-catalog collision risks. \\
+\textbf{Suite 17} & Cross-Provider Collision & 8 / 8 & \textbf{PASS} & Retains both works sharing numeric ID 1535; selective exclusion and comparison preserved. \\
+\textbf{Suite 18} & Strict Provider Status & 6 / 6 & \textbf{PASS} & Exact title and refinement modes accurately report non-AI status; no false AI claims. \\
+\textbf{Suite 19} & Walrus Mystery (\textit{Odd Taxi}) & 5 / 5 & \textbf{PASS} & Open-ended memory query retrieves \textit{Odd Taxi} as Strong Match; decomposes 4 atomic clues. \\
+\textbf{Suite 20} & Evidence Quality Grounding & 4 / 4 & \textbf{PASS} & Missing synopsis details marked Unverified (not Conflicted); real year gaps marked Conflicted. \\
+\textbf{Suite 21} & Server Diagnostics Object & 4 / 4 & \textbf{PASS} & Returns active model (\texttt{gemini-2.5-flash}) and sanitized diagnostic codes. \\
 \midrule
-\textbf{Summary} & \textbf{All 16 Verification Suites} & \textbf{48 / 48} & \textbf{100\% PASS} & \textbf{Zero hallucinations; verified catalog grounding.} \\
+\textbf{Summary} & \textbf{All 21 Verification Suites} & \textbf{74 / 74} & \textbf{100\% PASS} & \textbf{Zero hallucinations; verified catalog grounding.} \\
 \bottomrule
 \end{tabular}
 \end{table}

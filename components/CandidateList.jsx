@@ -16,7 +16,7 @@ import {
 import DetailDrawer from './DetailDrawer';
 
 export default function CandidateList({
-  candidates,
+  candidates = [],
   onConfirmCandidate,
   onExcludeCandidate,
   onRefineCandidate,
@@ -75,7 +75,7 @@ export default function CandidateList({
               Grounding & Retrieval Verification
             </span>
           </div>
-          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
             {reasoningSummary}
           </p>
         </div>
@@ -148,14 +148,14 @@ export default function CandidateList({
       {isLoading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {[1, 2].map((k) => (
-            <div key={k} className="panel skeleton-card" style={{ height: '210px' }} />
+            <div key={k} className="panel skeleton-card" style={{ height: '220px' }} />
           ))}
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && candidates.length === 0 ? (
-        <div className="panel" style={{ textAlign: 'center', padding: '3.5rem 1.5rem' }}>
+        <div className="panel" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
           <div
             style={{
               width: '48px',
@@ -183,6 +183,15 @@ export default function CandidateList({
       {/* Candidate List Cards */}
       {!isLoading && candidates.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Possible Matches ({candidates.length})
+            </h2>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              Ranked by memory evidence
+            </span>
+          </div>
+
           {candidates.map((cand, index) => {
             const candUid = getUid(cand);
             const isComparing = selectedForCompare.some(c => getUid(c) === candUid);
@@ -198,14 +207,14 @@ export default function CandidateList({
                   position: 'relative',
                   outline: isComparing ? '2px solid var(--accent-violet)' : 'none',
                   flexWrap: 'wrap',
-                  padding: '1.15rem'
+                  padding: '1.2rem'
                 }}
               >
-                {/* Poster Artwork with interactive drawer click & fallback */}
+                {/* Large Poster Artwork (155px x 220px) with interactive drawer click */}
                 <div
                   style={{
                     flexShrink: 0,
-                    width: '135px',
+                    width: '155px',
                     position: 'relative'
                   }}
                 >
@@ -217,7 +226,7 @@ export default function CandidateList({
                       cursor: 'pointer'
                     }}
                     onClick={() => setActiveDrawerAnime(cand)}
-                    title="Click to open rich details, characters, and scenes drawer"
+                    title="Click to view full anime details and characters"
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
@@ -230,10 +239,10 @@ export default function CandidateList({
                   >
                     <img
                       src={cand.posterUrl || 'https://via.placeholder.com/225x320?text=No+Poster'}
-                      alt={`Official poster for ${cand.title}`}
+                      alt={`Poster artwork for ${cand.title}`}
                       style={{
                         width: '100%',
-                        height: '190px',
+                        height: '220px',
                         objectFit: 'cover',
                         display: 'block',
                         border: '1px solid var(--border-subtle)',
@@ -259,17 +268,17 @@ export default function CandidateList({
                         opacity: 0,
                         transition: 'opacity 0.2s ease',
                         color: '#FFFFFF',
-                        fontSize: '0.72rem',
+                        fontSize: '0.74rem',
                         fontWeight: 600
                       }}
                       className="poster-hover-overlay"
                     >
-                      <Maximize2 size={16} />
+                      <Maximize2 size={18} />
                       <span>View Details</span>
                     </div>
                   </div>
 
-                  {/* Verified source link outside the button */}
+                  {/* Verified source link */}
                   {cand.sourceUrl && (
                     <a
                       href={cand.sourceUrl}
@@ -303,13 +312,13 @@ export default function CandidateList({
                       alignItems: 'flex-start',
                       flexWrap: 'wrap',
                       gap: '0.5rem',
-                      marginBottom: '0.4rem'
+                      marginBottom: '0.35rem'
                     }}
                   >
                     <div>
                       <h3
                         style={{
-                          fontSize: '1.2rem',
+                          fontSize: '1.25rem',
                           fontWeight: 800,
                           color: 'var(--text-primary)',
                           margin: 0,
@@ -320,7 +329,7 @@ export default function CandidateList({
                         {cand.title}
                       </h3>
                       {cand.englishTitle && cand.englishTitle !== cand.title && (
-                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.15rem 0 0' }}>
                           {cand.englishTitle}
                         </p>
                       )}
@@ -340,7 +349,7 @@ export default function CandidateList({
                     </span>
                   </div>
 
-                  {/* Metadata Chips: Catalog ID, Year, Format, Studio, Episodes, Genres */}
+                  {/* Concise Metadata Chips (Year, Format, Episodes, Genres) */}
                   <div
                     style={{
                       display: 'flex',
@@ -348,81 +357,125 @@ export default function CandidateList({
                       gap: '0.4rem',
                       fontSize: '0.76rem',
                       color: 'var(--text-secondary)',
-                      marginBottom: '0.75rem'
+                      marginBottom: '0.65rem'
                     }}
                   >
-                    <span style={{ background: 'rgba(6, 182, 212, 0.12)', color: 'var(--accent-cyan)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
-                      ID: #{cand.malId || cand.id}
-                    </span>
-                    {cand.year && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.year}</span>}
+                    {cand.year && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>{cand.year}</span>}
                     {cand.format && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.format}</span>}
                     {cand.episodes && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{cand.episodes} eps</span>}
-                    {cand.studio && <span style={{ background: 'var(--bg-main)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>Studio: {cand.studio}</span>}
                     {cand.genres && cand.genres.slice(0, 3).map((g, gi) => (
                       <span key={gi} style={{ background: 'rgba(255,255,255,0.04)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>{g}</span>
                     ))}
                   </div>
 
-                  {/* Grounded Synopsis */}
+                  {/* Featured "Why it fits" Section: 2-3 grounded evidence points */}
+                  {cand.matchingClues && cand.matchingClues.length > 0 && (
+                    <div
+                      style={{
+                        margin: '0.35rem 0 0.65rem',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.55rem 0.75rem'
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: 'var(--success-text)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          marginBottom: '0.3rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                      >
+                        <Sparkles size={13} />
+                        Why it fits:
+                      </div>
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingLeft: '1.15rem',
+                          fontSize: '0.82rem',
+                          color: 'var(--text-primary)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.2rem'
+                        }}
+                      >
+                        {cand.matchingClues.slice(0, 3).map((match, mi) => (
+                          <li key={mi}>{match}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Discrepancies if any */}
+                  {cand.conflictingClues && cand.conflictingClues.length > 0 && (
+                    <div
+                      style={{
+                        marginBottom: '0.65rem',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.45rem 0.75rem'
+                      }}
+                    >
+                      <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--danger-text)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                        Potential Discrepancies:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: 'var(--danger-text)' }}>
+                        {cand.conflictingClues.slice(0, 2).map((conf, ci) => (
+                          <li key={ci}>{conf}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Concise synopsis teaser with Drawer link */}
                   <p
                     style={{
-                      fontSize: '0.86rem',
+                      fontSize: '0.84rem',
                       color: 'var(--text-secondary)',
-                      lineHeight: 1.5,
-                      marginBottom: '0.85rem'
+                      lineHeight: 1.45,
+                      marginBottom: '0.75rem'
                     }}
                   >
-                    {cand.synopsis}
+                    {cand.synopsis && cand.synopsis.length > 160 ? cand.synopsis.slice(0, 160) + '...' : cand.synopsis}
+                    <button
+                      type="button"
+                      onClick={() => setActiveDrawerAnime(cand)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--accent-cyan)',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        paddingLeft: '0.35rem',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Full Details & Cast →
+                    </button>
                   </p>
-
-                  {/* Clue Breakdown: Matching, Conflicting, Unverified */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.35rem',
-                      marginBottom: '0.9rem',
-                      fontSize: '0.8rem',
-                      background: 'rgba(0, 0, 0, 0.15)',
-                      padding: '0.55rem 0.75rem',
-                      borderRadius: 'var(--radius-sm)'
-                    }}
-                  >
-                    {cand.matchingClues && cand.matchingClues.length > 0 && (
-                      <div style={{ color: 'var(--success-text)', display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: 700, flexShrink: 0 }}>✓ Matches:</span>
-                        <span>{cand.matchingClues.join('; ')}</span>
-                      </div>
-                    )}
-
-                    {cand.conflictingClues && cand.conflictingClues.length > 0 && (
-                      <div style={{ color: 'var(--danger-text)', display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: 700, flexShrink: 0 }}>✕ Conflicting:</span>
-                        <span>{cand.conflictingClues.join('; ')}</span>
-                      </div>
-                    )}
-
-                    {cand.unverifiedClues && cand.unverifiedClues.length > 0 && (
-                      <div style={{ color: 'var(--text-muted)', display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: 600, flexShrink: 0 }}>? Unverified:</span>
-                        <span>{cand.unverifiedClues.join('; ')}</span>
-                      </div>
-                    )}
-                  </div>
 
                   {/* Spoiler Shielding Control */}
                   {cand.spoilerExplanation && (
                     <div
                       style={{
-                        marginBottom: '1rem',
+                        marginBottom: '0.85rem',
                         background: 'var(--bg-input)',
-                        padding: '0.5rem 0.75rem',
+                        padding: '0.45rem 0.65rem',
                         borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-subtle)'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--warning-text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <span style={{ fontSize: '0.76rem', color: 'var(--warning-text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           <AlertTriangle size={13} />
                           Spoiler Protection
                         </span>
@@ -433,7 +486,7 @@ export default function CandidateList({
                             background: 'transparent',
                             border: 'none',
                             color: 'var(--accent-cyan)',
-                            fontSize: '0.76rem',
+                            fontSize: '0.74rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -479,7 +532,7 @@ export default function CandidateList({
                       type="button"
                       onClick={() => onConfirmCandidate(cand)}
                       className="btn btn-success"
-                      style={{ fontSize: '0.82rem', padding: '0.35rem 0.8rem' }}
+                      style={{ fontSize: '0.82rem', padding: '0.35rem 0.85rem' }}
                       title="Confirm that this is the anime you were looking for"
                     >
                       <Check size={14} />
@@ -494,7 +547,7 @@ export default function CandidateList({
                       title="Exclude this candidate from the current search"
                     >
                       <X size={14} />
-                      That's not it
+                      Not this one
                     </button>
 
                     <button
@@ -504,7 +557,7 @@ export default function CandidateList({
                       style={{ fontSize: '0.82rem', padding: '0.35rem 0.75rem' }}
                       title="Specify what's close and add corrections"
                     >
-                      Close, but...
+                      Refine
                     </button>
 
                     <button

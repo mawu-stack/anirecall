@@ -30,6 +30,7 @@ export default function Home() {
   const [reasoningSummary, setReasoningSummary] = useState('');
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [providerStatus, setProviderStatus] = useState('missing_credentials');
+  const [geminiDiagnostics, setGeminiDiagnostics] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -211,6 +212,9 @@ export default function Home() {
         if (json.data.providerStatus) {
           setProviderStatus(json.data.providerStatus);
         }
+        if (json.data.geminiDiagnostics) {
+          setGeminiDiagnostics(json.data.geminiDiagnostics);
+        }
         if (json.data.answeredCategories) setAnsweredCategories(json.data.answeredCategories);
         if (json.data.previousQuestions) setPreviousQuestions(json.data.previousQuestions);
       } else {
@@ -296,6 +300,7 @@ export default function Home() {
         onSelectMode={(mode) => setCurrentMode(mode)}
         isDemoMode={isDemoMode}
         providerStatus={providerStatus}
+        geminiDiagnostics={geminiDiagnostics}
       />
 
       {/* Error state alert */}
@@ -350,8 +355,66 @@ export default function Home() {
             }}
           />
 
-          {/* Image-backed Example Searches (Prominent when starting a search) */}
-          {candidates.length === 0 && !isLoading && (
+          {/* Recovery Actions near the top when search yields 0 candidates */}
+          {hasActiveSearch && candidates.length === 0 && !isLoading && (
+            <div
+              className="panel fade-in"
+              style={{
+                marginBottom: '1.25rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(30, 41, 59, 0.7)',
+                borderColor: 'var(--border-subtle)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}
+            >
+              <div>
+                <p style={{ fontWeight: 700, margin: '0 0 0.2rem', color: 'var(--text-primary)', fontSize: '0.92rem' }}>
+                  No candidates match your current memory combination
+                </p>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+                  Try relaxing restrictive year/format filters, removing ambiguous clues, or searching by exact title.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleNewSearch('', 'story')}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
+                >
+                  Start New Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChangeSearchMode('title')}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
+                >
+                  Switch to Exact Title
+                </button>
+                {excludedIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExcludedIds([]);
+                      executeSearch({ customExcluded: [], isRefinement: true });
+                    }}
+                    className="btn btn-ghost"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.8rem' }}
+                  >
+                    Clear Exclusions
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Image-backed Example Searches (Shown ONLY on welcoming initial start state) */}
+          {!hasActiveSearch && !isLoading && (
             <VisualExamples
               onSelectExample={(exampleText) => {
                 handleNewSearch(exampleText);

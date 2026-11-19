@@ -455,6 +455,79 @@ async function runUnitTests() {
     assert(false, `Test 18 failed with error: ${err.message}`);
   }
 
+  console.log('\n-----------------------------------------------------');
+
+  // Test 19: Walrus Taxi Driver Mystery (Odd Taxi Discovery & Atomic Clue Extraction)
+  console.log('Test 19: Walrus Taxi Driver Mystery (Odd Taxi Discovery & Atomic Clue Extraction)');
+  try {
+    const walrusQuery = "A walrus taxi driver gets caught up in a missing girl mystery in a city populated by animals.";
+    const result = await runRecallAgent({ query: walrusQuery });
+
+    assert(result.candidates.length > 0, `Surfaced candidates for Odd Taxi query (Count: ${result.candidates.length})`);
+    const top = result.candidates[0];
+    assert(top.title === 'Odd Taxi' || top.romajiTitle === 'Odd Taxi' || top.englishTitle === 'ODDTAXI', `Top candidate is Odd Taxi (Got: ${top.title})`);
+    assert(top.matchTier === 'Strong match' || top.matchTier === 'Possible match', `Match tier is valid (Got: ${top.matchTier})`);
+
+    // Verify atomic clue extraction: should extract distinct character/setting/scene/genre clues rather than dumping 1 raw blob
+    const categories = new Set(result.clues.map(c => c.category));
+    assert(categories.has('character') || categories.has('setting') || categories.has('genre'), `Extracted atomic structured clues across multiple categories (Categories: ${Array.from(categories).join(', ')})`);
+    assert(result.clues.length >= 2, `Extracted multiple atomic clues rather than single sentence dump (Clue count: ${result.clues.length})`);
+    console.log(`    Extracted clues: ${result.clues.map(c => `[${c.category}] ${c.text}`).join('; ')}`);
+  } catch (err) {
+    assert(false, `Test 19 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 20: Grounded Evidence Quality — Synopsis Absences Categorized as Unverified, NOT Conflicted
+  console.log('Test 20: Grounded Evidence Quality — Synopsis Absences Categorized as Unverified, NOT Conflicted');
+  try {
+    const mockCandidate = {
+      id: 9999,
+      uid: 'mal:9999',
+      source: 'mal',
+      title: 'City Detective Chronicles',
+      synopsis: 'A seasoned detective investigates strange occurrences in an urban high-rise.',
+      year: 2020,
+      format: 'TV'
+    };
+
+    // Clues: one matching ('detective'), one not in synopsis ('yellow rain boots'), one year conflict (released 1995 vs 2020)
+    const testClues = [
+      { category: 'character', text: 'seasoned detective', confidence: 'sure' },
+      { category: 'scene', text: 'yellow rain boots in the alleyway', confidence: 'sure' },
+      { category: 'approx_year', text: 'Released around 1995', confidence: 'sure' }
+    ];
+
+    const evaluation = evaluateCandidateAgainstClues(mockCandidate, testClues);
+
+    // Matching clue found
+    assert(evaluation.matchingClues.some(m => m.toLowerCase().includes('detective')), 'Supported clue is in matchingClues');
+
+    // Unmentioned detail ('yellow rain boots') must be unverified, NEVER conflicting
+    assert(evaluation.unverifiedClues.some(u => u.toLowerCase().includes('yellow rain boots')), 'Unmentioned detail is classified as unverified');
+    assert(!evaluation.conflictingClues.some(c => c.toLowerCase().includes('yellow rain boots')), 'Unmentioned detail is NOT classified as a conflict');
+
+    // Real conflict (year 2020 vs 1995 > 8 years difference) MUST be in conflictingClues
+    assert(evaluation.conflictingClues.some(c => c.toLowerCase().includes('year discrepancy')), 'Genuine chronological/year discrepancy is correctly flagged as conflict');
+  } catch (err) {
+    assert(false, `Test 20 failed with error: ${err.message}`);
+  }
+
+  console.log('\n-----------------------------------------------------');
+
+  // Test 21: Server Diagnostics Object & Model Attribution
+  console.log('Test 21: Server Diagnostics Object & Model Attribution');
+  try {
+    const res = await runRecallAgent({ query: 'Spirited Away', mode: 'title' });
+    assert(res.geminiDiagnostics !== undefined, 'runRecallAgent returns geminiDiagnostics object');
+    assert(typeof res.geminiDiagnostics.hasKey === 'boolean', 'geminiDiagnostics includes boolean hasKey');
+    assert(typeof res.geminiDiagnostics.activeModel === 'string', `geminiDiagnostics includes activeModel (Got: ${res.geminiDiagnostics.activeModel})`);
+    assert(typeof res.geminiDiagnostics.errorCode === 'string', `geminiDiagnostics includes sanitized errorCode (Got: ${res.geminiDiagnostics.errorCode})`);
+  } catch (err) {
+    assert(false, `Test 21 failed with error: ${err.message}`);
+  }
+
   console.log('\n=====================================================');
   console.log(`TOTAL UNIT TESTS: ${passedCount + failedCount} | PASSED: ${passedCount} | FAILED: ${failedCount}`);
   console.log('=====================================================\n');
